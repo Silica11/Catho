@@ -201,6 +201,7 @@
                 <label>Foto Effettuata?</label>
                 <input type="checkbox" id="check_foto" style="width: auto;">
                 <input type="file" id="file_foto" accept="image/*" style="margin-top: 10px;">
+                <img id="preview_foto" src="" style="width: 100%; margin-top: 10px; border-radius: 12px; display: none; border: 1px solid var(--primary-pink);">
             </div>
 
             <label>Rapporti Stratigrafici</label>
@@ -244,7 +245,23 @@
         const addButton = document.getElementById('add-button');
         const modal = document.getElementById('form-modal');
         const chipsArea = document.getElementById('chips-area');
+        const modal = document.getElementById('form-modal');
+        const chipsArea = document.getElementById('chips-area');
 
+    
+        
+        // MOSTRA ANTEPRIMA IN TEMPO REALE
+        document.getElementById('file_foto').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            const preview = document.getElementById('preview_foto');
+            if (file) {
+                preview.src = URL.createObjectURL(file);
+                preview.style.display = 'block';
+            } else {
+                preview.src = '';
+                preview.style.display = 'none';
+            }
+        });
         // SCARICA I DATI AL PRIMO AVVIO E AD OGNI AGGIORNAMENTO
         async function caricaDatiDalDatabase() {
             try {
@@ -495,9 +512,10 @@
         function selectCantiere(c) { path.cantiere = c; currentLevel = "QUADRANTE"; render(); }
         function resetNav() { currentLevel = "HOME"; path = {scavo:"", cantiere:"", quadrante:""}; render(); caricaDatiDalDatabase(); }
 
-        function openForm(dati = null) {
+       function openForm(dati = null) {
             document.getElementById('form-context').value = `${path.scavo} | ${path.cantiere} | ${path.quadrante}`;
             const btn = document.querySelector('.btn-save');
+            const preview = document.getElementById('preview_foto'); // Prendiamo il quadro
             rapportiDati = [];
             
             if(dati) {
@@ -505,15 +523,33 @@
                 Object.keys(mapping).forEach(tipo => {
                     if (mapping[tipo]) { mapping[tipo].toString().split(',').forEach(num => { if(num.trim()) rapportiDati.push({ id: Math.random(), tipo: tipo, num: num.trim() }); }); }
                 });
+                
                 document.getElementById('num_us').value = dati.Numero_US;
                 document.getElementById('tipo_us').value = dati.Tipo_US;
                 document.getElementById('descrizione').value = dati.Descrizione;
                 document.getElementById('interpretazione').value = dati.Interpretazione;
+                
+                // --- MOSTRA LA FOTO SE ESISTE NEL DATABASE ---
+                if (dati.Foto && dati.Foto.trim() !== "") {
+                    preview.src = dati.Foto;
+                    preview.style.display = 'block';
+                } else {
+                    preview.src = '';
+                    preview.style.display = 'none';
+                }
+                document.getElementById('file_foto').value = ""; // Pulisce il bottone file
+
                 btn.innerText = "AGGIORNA DATI";
             } else {
                 document.getElementById('num_us').value = "";
                 document.getElementById('descrizione').value = "";
                 document.getElementById('interpretazione').value = "";
+                
+                // --- RESETTA L'ANTEPRIMA PER LE NUOVE US ---
+                preview.src = '';
+                preview.style.display = 'none';
+                document.getElementById('file_foto').value = "";
+
                 btn.innerText = "INVIA DATI";
             }
             renderChips(); 
