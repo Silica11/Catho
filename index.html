@@ -44,7 +44,7 @@
 
         .breadcrumb {
             margin-top: 15px;
-            font-size: 14px;
+            font-size: 18px;
             color: var(--accent-pink);
             cursor: pointer;
             font-weight: bold;
@@ -60,7 +60,7 @@
 
         .box {
             background: var(--white);
-            padding: 30px 15px;
+            padding: 20px 15px;
             border-radius: 20px;
             text-align: center;
             font-weight: 600;
@@ -71,7 +71,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            aspect-ratio: 1 / 1;
+            min-height: 90px;
             position: relative; /* Per posizionare la X */
         }
 
@@ -156,7 +156,7 @@
 <body>
 
     <div class="header-container">
-        <input type="text" class="search-bar" placeholder="Cerca US...">
+        <input type="text" id="search-input" class="search-bar" placeholder="Cerca US per numero..." oninput="cercaUS(this.value)">
         <div id="breadcrumb" class="breadcrumb" onclick="resetNav()">Home</div>
     </div>
 
@@ -370,6 +370,73 @@
             }
         }
 
+        // LA NUOVA FUNZIONE DI RICERCA
+        function cercaUS(query) {
+            query = query.trim().toLowerCase();
+            
+            // Se svuoti la barra di ricerca, torna dove eri
+            if (!query) {
+                render();
+                return;
+            }
+
+            // Nasconde il tasto + e cambia il titolo
+            addButton.style.display = "none";
+            breadcrumb.innerText = "Risultati ricerca per: " + query;
+            grid.innerHTML = ""; // Pulisce lo schermo
+
+            // Cerca in tutto il database
+            const risultati = databaseLocale.filter(us => 
+                String(us.Numero_US).toLowerCase().includes(query)
+            );
+
+            if (risultati.length === 0) {
+                grid.innerHTML = "<p style='grid-column: 1/-1; text-align: center; color: gray;'>Nessuna US trovata.</p>";
+                return;
+            }
+
+            // Disegna i box per i risultati
+            risultati.forEach(us => {
+                const div = document.createElement('div');
+                div.className = 'box';
+                div.style.position = "relative"; 
+                div.style.aspectRatio = "auto";
+                div.style.height = "auto"; 
+                div.style.minHeight = "60px";
+                div.style.padding = "10px 15px";
+                div.style.flexDirection = "column"; 
+                div.style.alignItems = "flex-start";
+                div.style.border = "1px dashed var(--accent-pink)";
+                div.style.background = "#fff";
+                
+                // Crea la stringa di contesto (es: Asingeran 2022 | Cantiere E | Q1)
+                const contesto = `${us.Scavo || "?"} | ${us.Cantiere || "?"} | ${us.Quadrante || "?"}`;
+
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="font-size:10px; color:var(--accent-pink); font-weight:bold;">US</span>
+                            <span style="font-size:18px; font-weight:bold;">${us.Numero_US}</span>
+                        </div>
+                        <div style="font-size:11px; color:gray;">${us.Tipo_US}</div>
+                    </div>
+                    <div style="font-size:11px; color:var(--accent-pink); margin-top:5px;">
+                        📍 ${contesto}
+                    </div>
+                `;
+                
+                div.onclick = () => {
+                    // Imposta temporaneamente il path in modo che il form mostri il contesto giusto
+                    path.scavo = us.Scavo || "";
+                    path.cantiere = us.Cantiere || "";
+                    path.quadrante = us.Quadrante || "";
+                    // Pulisce la barra di ricerca per la prossima volta
+                    document.getElementById('search-input').value = "";
+                    openForm(us);
+                };
+                grid.appendChild(div);
+            });
+        }
         function createBox(text, icon, onClick, onDelete) {
             const div = document.createElement('div');
             div.className = 'box';
