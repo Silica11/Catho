@@ -295,41 +295,22 @@
             finally { document.getElementById('loader').style.display = 'none'; }
         }
 
-        // NAVIGAZIONE CORRETTA
+       // NAVIGAZIONE BLINDATA
         function navTo(level, name = "") {
+            console.log("Navigo a:", level, "con nome:", name); // Questo ci serve per capire se clicca
             document.getElementById('search-input').value = ""; 
-            if (level === 'HOME') {
-                path = { scavo: "", cantiere: "", quadrante: "" };
-                currentLevel = "HOME";
-            } else if (level === 'CANTIERE') {
-                // Se clicco sullo scavo, voglio vedere i suoi cantieri
-                path.scavo = name;
-                path.cantiere = "";
-                path.quadrante = "";
-                currentLevel = "CANTIERE";
-            } else if (level === 'QUADRANTE') {
-                // Se clicco sul cantiere, voglio vedere i suoi quadranti
-                path.cantiere = name;
-                path.quadrante = "";
-                currentLevel = "QUADRANTE";
-            }
-            render();
-        }
-
-        // NAVIGAZIONE DEFINTIVA
-        function navTo(level, name = "") {
-            document.getElementById('search-input').value = ""; 
-            currentLevel = level;
             
             if (level === 'HOME') {
-                path = { scavo: "", cantiere: "", quadrante: "" };
+                path.scavo = ""; path.cantiere = ""; path.quadrante = "";
+                currentLevel = "HOME";
             } else if (level === 'CANTIERE') {
-                path.scavo = name;
-                path.cantiere = "";
-                path.quadrante = "";
+                path.scavo = name; // Qui name è il nome dello Scavo
+                path.cantiere = ""; path.quadrante = "";
+                currentLevel = "CANTIERE";
             } else if (level === 'QUADRANTE') {
-                path.cantiere = name;
+                path.cantiere = name; // Qui name è il nome del Cantiere
                 path.quadrante = "";
+                currentLevel = "QUADRANTE";
             }
             render();
         }
@@ -338,20 +319,20 @@
             grid.innerHTML = ""; 
             addButton.style.display = "flex"; 
             
-            // Costruzione Breadcrumb (Blindata)
+            // Costruzione Breadcrumb con virgolette singole sicure
             let bcHTML = `<span onclick="navTo('HOME')">Home</span>`;
             if (path.scavo) {
-                bcHTML += ` > <span onclick="navTo('CANTIERE', \`${path.scavo.replace(/'/g, "\\'")}\`)">${path.scavo}</span>`;
+                bcHTML += ` > <span onclick="navTo('CANTIERE', '${path.scavo.replace(/'/g, "\\'")}')">${path.scavo}</span>`;
             }
             if (path.cantiere) {
-                bcHTML += ` > <span onclick="navTo('QUADRANTE', \`${path.cantiere.replace(/'/g, "\\'")}\`)">${path.cantiere}</span>`;
+                bcHTML += ` > <span onclick="navTo('QUADRANTE', '${path.cantiere.replace(/'/g, "\\'")}')">${path.cantiere}</span>`;
             }
             if (path.quadrante && currentLevel === "US_LIST") {
-                bcHTML += ` > <span>${path.quadrante}</span>`;
+                bcHTML += ` > <span style="color:var(--dark-text); text-decoration:none;">${path.quadrante}</span>`;
             }
             breadcrumb.innerHTML = bcHTML;
 
-            // Visualizzazione Griglia
+            // Logica dei livelli
             if (currentLevel === "HOME") {
                 Object.keys(dataStruttura).forEach(s => createBox(s, "🏗️", () => navTo('CANTIERE', s)));
             } else if (currentLevel === "CANTIERE") {
