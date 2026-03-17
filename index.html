@@ -321,35 +321,64 @@
         function openForm(d = null) {
             document.getElementById('form-context').value = `${path.scavo} | ${path.cantiere} | ${path.quadrante}`;
             const preview = document.getElementById('preview_foto');
+            const saveBtn = document.getElementById('save-btn-text');
             rapportiDati = [];
             
             if(d) {
+                // 1. CARICAMENTO DATI ESISTENTI
                 const map = { "Copre": d.Copre, "È coperto da": d.Coperto_da, "Taglia": d.Taglia, "È tagliato da": d.Tagliato_da, "Riempie": d.Riempie, "È riempito da": d.Riempito_da };
-                Object.keys(map).forEach(t => { if(map[t]) map[t].toString().split(',').forEach(n => { if(n.trim()) rapportiDati.push({id: Math.random(), tipo: t, num: n.trim()}); })});
+                Object.keys(map).forEach(t => { 
+                    if(map[t]) map[t].toString().split(',').forEach(n => { 
+                        if(n.trim()) rapportiDati.push({id: Math.random(), tipo: t, num: n.trim()}); 
+                    })
+                });
                 
                 document.getElementById('num_us').value = d.Numero_US || "";
                 document.getElementById('tipo_us').value = (d.Tipo_US || "piano").toLowerCase();
                 document.getElementById('descrizione').value = d.Descrizione || "";
                 document.getElementById('interpretazione').value = d.Interpretazione || "";
                 
-                // FIX FOTO DEFINITIVO
+                // 2. GESTIONE FOTO (IL FIX)
                 let url = d.Link || d.link || d.LINK || d.URL || "";
                 if(url && url.length > 10) {
                     if(url.includes("drive.google.com")) {
-                        const id = url.match(/[-\w]{25,}/);
-                        if(id) url = `https://drive.google.com/uc?id=${id[0]}`;
+                        const idMatch = url.match(/[-\w]{25,}/);
+                        if(idMatch) {
+                            // Usiamo l'ID corretto col simbolo $
+                            url = `https://drive.google.com/thumbnail?id=${idMatch[0]}&sz=w1000`;
+                        }
                     }
-                    preview.src = url; preview.style.display = 'block';
-                } else { preview.style.display = 'none'; }
-                document.getElementById('save-btn-text').innerText = "AGGIORNA DATI";
-            } else {
-                document.getElementById('num_us').value = ""; document.getElementById('descrizione').value = ""; document.getElementById('interpretazione').value = "";
-                preview.style.display = 'none'; document.getElementById('save-btn-text').innerText = "INVIA DATI";
-            }
-            document.getElementById('file_foto').value = ""; renderChips();
-            modal.style.display = 'flex'; modalContent.style.transform = 'translateY(0)';
-        }
+                    preview.src = url;
+                    preview.style.display = 'block';
+                    preview.style.minHeight = '200px';
+                    preview.style.objectFit = 'contain';
+                    
+                    // Se il link thumbnail fallisce, usa il vecchio "uc" come backup
+                    preview.onerror = function() {
+                        if(url.includes("thumbnail")) {
+                            const idBackup = url.match(/[-\w]{25,}/);
+                            this.src = `https://drive.google.com/uc?id=${idBackup[0]}`;
+                        }
+                    };
+                } else {
+                    preview.style.display = 'none';
+                }
+                saveBtn.innerText = "AGGIORNA DATI";
 
+            } else {
+                // 3. RESET PER NUOVA US
+                document.getElementById('num_us').value = "";
+                document.getElementById('descrizione').value = "";
+                document.getElementById('interpretazione').value = "";
+                preview.style.display = 'none';
+                saveBtn.innerText = "INVIA DATI";
+            }
+
+            document.getElementById('file_foto').value = ""; 
+            renderChips();
+            modal.style.display = 'flex'; 
+            modalContent.style.transform = 'translateY(0)';
+        }
         function closeModal() { modalContent.style.transform = 'translateY(100%)'; setTimeout(() => modal.style.display = 'none', 300); }
         function addRapporto(t) { const n = prompt(`US che ${t}:`); if(n) { rapportiDati.push({id: Date.now(), tipo: t, num: n}); renderChips(); } }
         function renderChips() { chipsArea.innerHTML = ""; rapportiDati.forEach(r => { const c = document.createElement('div'); c.style="background:var(--primary-pink);padding:5px 10px;border-radius:15px;font-size:11px"; c.innerHTML = `${r.tipo}: ${r.num} <b onclick="removeRapporto(${r.id})" style="color:red;margin-left:5px">✕</b>`; chipsArea.appendChild(c); }); }
