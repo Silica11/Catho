@@ -130,28 +130,13 @@
     <div id="loader" class="loader-container">
         <svg class="archaeo-icon" viewBox="0 0 64 64">
             <path d="M15 15 L48 12 L52 45 L40 55 L12 50 L10 28 Z" opacity="0.3" fill="none" stroke-width="2.5"/>
-            <path d="M30 13 L33 22 L28 32" opacity="0.2" /> <g opacity="0.7" fill="var(--accent-pink)">
-                <path d="M18 20 l3 3 l-3 -1 z" />
-                <path d="M22 19 l2 4 l-1 -2 z" />
-                <path d="M25 21 l4 2 l-3 -1 z" />
-                <path d="M32 18 l2 5 l-1 -2 z" />
-                <path d="M35 20 l5 1 l-4 -1 z" />
-                <path d="M16 28 l4 2 l-2 -1 z" />
-                <path d="M21 27 l2 4 l-1 -2 z" />
-                <path d="M26 29 l3 3 l-2 -1 z" />
-                <path d="M30 28 l1 4 l-1 -2 z" />
-                <path d="M34 30 l4 1 l-3 -1 z" />
-                <path d="M40 27 l2 4 l-1 -2 z" />
-                <path d="M18 36 l3 2 l-2 -1 z" />
-                <path d="M23 35 l2 5 l-1 -2 z" />
-                <path d="M27 37 l4 1 l-3 -1 z" />
-                <path d="M33 36 l2 3 l-1 -1 z" />
-                <path d="M37 38 l5 2 l-4 -1 z" />
-                <path d="M22 45 l2 4 l-1 -2 z" />
-                <path d="M26 44 l4 2 l-3 -1 z" />
-                <path d="M32 46 l3 3 l-2 -1 z" />
-                <path d="M38 45 l2 4 l-1 -2 z" />
-            </g>
+            <path d="M30 13 L33 22 L28 32" opacity="0.2" /> <text font-size="5" fill="var(--accent-pink)" opacity="0.8" style="font-family: sans-serif;">
+                <tspan x="16" y="22">𒆪𒀠𒁍𒌝𒀀𒇉</tspan>
+                <tspan x="14" y="29">𒌓𒄒𒉣𒀉𒋾𒀀𒊏</tspan>
+                <tspan x="15" y="36">𒀭𒌓𒀝𒆪𒌋𒀭𒆷</tspan>
+                <tspan x="18" y="43">𒈦𒇻𒀭𒆘𒀀𒁺𒀭</tspan>
+                <tspan x="20" y="50">𒀫𒌓𒀭𒈾𒀭𒇸</tspan>
+            </text>
 
             <circle class="dust-particle" cx="30" cy="18" r="1.2" />
             <circle class="dust-particle" cx="42" cy="22" r="0.8" style="animation-delay: 0.3s;"/>
@@ -161,6 +146,7 @@
                 <rect x="30" y="2" width="4" height="18" rx="1" fill="var(--accent-pink)" /> 
                 <path d="M26 20 L38 20 L42 35 L22 35 Z" fill="var(--bg-color)" stroke-width="2" /> </g>
         </svg>
+        
         <div id="loader-text" style="margin-top: 15px; color: var(--accent-pink); font-weight: bold; font-size: 16px; letter-spacing: 1px;">ANALISI REPERTI...</div>
     </div>
 
@@ -328,25 +314,26 @@
         function render() {
             grid.innerHTML = ""; addButton.style.display = "flex"; 
             
-            // Costruzione Breadcrumb
+            // Costruzione Breadcrumb (Blindato contro apostrofi e spazi)
             let bcHTML = `<span onclick="navTo('HOME')">Home</span>`;
             if (path.scavo) {
-                bcHTML += ` > <span onclick="navTo('CANTIERE', '${path.scavo}')">${path.scavo}</span>`;
+                bcHTML += ` > <span onclick="navTo('CANTIERE', \`${path.scavo}\`)">${path.scavo}</span>`;
             }
             if (path.cantiere) {
-                bcHTML += ` > <span onclick="navTo('QUADRANTE', '${path.cantiere}')">${path.cantiere}</span>`;
+                bcHTML += ` > <span onclick="navTo('QUADRANTE', \`${path.cantiere}\`)">${path.cantiere}</span>`;
             }
             if (path.quadrante && currentLevel === "US_LIST") {
-                bcHTML += ` > <span>${path.quadrante}</span>`; // Non cliccabile, sei già qui
+                bcHTML += ` > <span>${path.quadrante}</span>`;
             }
             breadcrumb.innerHTML = bcHTML;
 
+            // Creazione Box aggiornata
             if (currentLevel === "HOME") {
-                Object.keys(dataStruttura).forEach(s => createBox(s, "🏗️", () => navTo('CANTIERE', s), () => deleteItem(s)));
+                Object.keys(dataStruttura).forEach(s => createBox(s, "🏗️", () => navTo('CANTIERE', s)));
             } else if (currentLevel === "CANTIERE") {
-                Object.keys(dataStruttura[path.scavo] || {}).forEach(c => createBox(c, "🚧", () => navTo('QUADRANTE', c), () => deleteItem(c)));
+                Object.keys(dataStruttura[path.scavo] || {}).forEach(c => createBox(c, "🚧", () => navTo('QUADRANTE', c)));
             } else if (currentLevel === "QUADRANTE") {
-                (dataStruttura[path.scavo][path.cantiere] || []).forEach(q => createBox(q, "🟦", () => { path.quadrante = q; currentLevel = "US_LIST"; render(); }, () => deleteItem(q)));
+                (dataStruttura[path.scavo][path.cantiere] || []).forEach(q => createBox(q, "🟦", () => { path.quadrante = q; currentLevel = "US_LIST"; render(); }));
             } else if (currentLevel === "US_LIST") {
                 const filtrat = databaseLocale.filter(u => u.Scavo == path.scavo && u.Cantiere == path.cantiere && u.Quadrante == path.quadrante);
                 if(filtrat.length === 0) grid.innerHTML = "<p style='grid-column:1/-1;text-align:center;color:gray;'>Nessuna US. Clicca +</p>";
@@ -358,9 +345,10 @@
             }
         }
 
-        function createBox(text, icon, onClick, onDelete) {
+        function createBox(text, icon, onClick) {
             const div = document.createElement('div'); div.className = 'box';
-            div.innerHTML = `<div class='delete-btn' onclick='event.stopPropagation(); onDelete()'>✕</div><div class='box-icon'>${icon}</div>${text}`;
+            // Ora usa comandi blindati per la X
+            div.innerHTML = `<div class='delete-btn' onclick='event.stopPropagation(); deleteItem(\`${text}\`)'>✕</div><div class='box-icon'>${icon}</div>${text}`;
             div.onclick = onClick; grid.appendChild(div);
         }
 
