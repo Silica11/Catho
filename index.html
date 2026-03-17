@@ -40,7 +40,7 @@
         }
 
         .back-btn {
-            display: none; /* Nascosto in Home */
+            display: none; /* Gestito da JS */
             align-items: center; justify-content: center;
             background: var(--white); color: var(--accent-pink);
             border: 2px solid var(--primary-pink); border-radius: 50%;
@@ -49,15 +49,16 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
 
-        /* Rendiamo le briciole semplici testi */
-        .breadcrumb { margin-top: 0; font-size: 14px; color: var(--dark-text); font-weight: 500; opacity: 0.7; }
+        .breadcrumb { 
+            font-size: 14px; color: var(--dark-text); 
+            font-weight: 500; opacity: 0.8;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
         .breadcrumb b { color: var(--accent-pink); opacity: 1; }
 
         .header-container { width: 100%; max-width: 500px; margin-bottom: 20px; }
         .search-bar { width: 100%; padding: 12px 20px; border-radius: 25px; border: none; background: var(--white); box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-size: 16px; outline: none; box-sizing: border-box; }
-        .breadcrumb { margin-top: 15px; font-size: 18px; color: var(--accent-pink); font-weight: bold; }
-        .breadcrumb span { cursor: pointer; text-decoration: underline; margin: 0 2px; }
-        .breadcrumb span:last-child { cursor: default; text-decoration: none; color: var(--dark-text); }
+        
         .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 500px; padding-bottom: 100px; }
 
         .box {
@@ -84,13 +85,12 @@
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);
             display: none; justify-content: center; align-items: flex-end; z-index: 1000;
-            backdrop-filter: blur(2px); /* Un tocco chic per sfocare lo sfondo */
+            backdrop-filter: blur(2px);
         }
 
         .modal-content {
             background: var(--white); width: 100%; max-width: 500px; 
-            height: 92vh; /* Forza l'altezza quasi a tutto schermo */
-            border-radius: 30px 30px 0 0; padding: 15px 25px 40px 25px; 
+            height: 92vh; border-radius: 30px 30px 0 0; padding: 15px 25px 40px 25px; 
             overflow-y: auto; box-sizing: border-box; 
             transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative; touch-action: pan-y;
@@ -104,7 +104,7 @@
         input[readonly] { background-color: #f2f2f2; color: #888; }
         .btn-save { width: 100%; padding: 15px; background: var(--accent-pink); color: white; border: none; border-radius: 15px; font-size: 18px; font-weight: bold; margin-top: 10px; cursor: pointer; }
 
-        /* --- NUOVO LOADER TAVOLETTA CUNEIFORME --- */
+        /* --- LOADER TAVOLETTA --- */
         .loader-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: var(--bg-color); display: none; flex-direction: column;
@@ -117,18 +117,8 @@
             transform-box: fill-box;
         }
 
-        /* Il pennello che spolvera */
-        .brush-anim { 
-            animation: dusting 1.2s ease-in-out infinite; 
-            transform-origin: top center; 
-        }
-
-        /* La polvere che compare */
-        .dust-particle {
-            animation: puff 1.2s ease-in-out infinite;
-            fill: var(--accent-pink);
-            stroke: none;
-        }
+        .brush-anim { animation: dusting 1.2s ease-in-out infinite; transform-origin: top center; }
+        .dust-particle { animation: puff 1.2s ease-in-out infinite; fill: var(--accent-pink); stroke: none; }
 
         @keyframes dusting {
             0%, 100% { transform: rotate(-22deg) translateX(-8px); }
@@ -140,7 +130,6 @@
             50% { opacity: 0.6; transform: translateY(-12px) scale(1.2); }
         }
 
-        /* NOTIFICHE TOAST */
         #toast {
             position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
             background: var(--accent-pink); color: white; padding: 12px 25px;
@@ -158,14 +147,14 @@
             <path d="M30 13 L33 22 L28 32" opacity="0.2" /> 
             
             <text font-size="2.8" fill="var(--accent-pink)" opacity="0.8" 
-      x="32" text-anchor="middle"
-      style="font-family: serif; letter-spacing: 0.5px; stroke: none; font-weight: 100;">
-    <tspan x="32" y="24">𒆪𒀠𒁍𒌝𒀀𒇉𒄒𒉣</tspan>
-    <tspan x="32" y="30">𒌓𒄒𒉣𒋾𒀭𒆘𒀀</tspan>
-    <tspan x="32" y="36">𒀭𒌓𒀝𒆪𒌋𒀭</tspan>
-    <tspan x="32" y="42">𒈦𒇻𒀠𒁍𒌝𒆘𒀀𒁺</tspan>
-    <tspan x="32" y="48">𒀭𒀠𒀫𒀭𒈾</tspan>
-</text>
+                  x="32" text-anchor="middle"
+                  style="font-family: serif; letter-spacing: 0.5px; stroke: none; font-weight: 100;">
+                <tspan x="32" y="24">𒆪𒀠𒁍𒌝𒀀𒇉𒄒𒉣</tspan>
+                <tspan x="32" y="30">𒌓𒄒𒉣𒋾𒀭𒆘𒀀</tspan>
+                <tspan x="32" y="36">𒀭𒌓𒀝𒆪𒌋𒀭</tspan>
+                <tspan x="32" y="42">𒈦𒇻𒀠𒁍𒌝𒆘𒀀𒁺</tspan>
+                <tspan x="32" y="48">𒀭𒀠𒀫𒀭𒈾</tspan>
+            </text>
 
             <circle class="dust-particle" cx="30" cy="18" r="1.2" />
             <circle class="dust-particle" cx="42" cy="22" r="0.8" style="animation-delay: 0.3s;"/>
@@ -279,6 +268,7 @@
             setTimeout(() => t.classList.remove('show'), 3000);
         }
 
+        // --- GESTIONE SWIPE RESISTENTE ---
         let touchStartY = 0;
         let isDragging = false;
 
@@ -290,30 +280,20 @@
         modalContent.addEventListener('touchmove', e => {
             const touchY = e.touches[0].clientY;
             const diff = touchY - touchStartY;
-
-            // Attiviamo il trascinamento solo se siamo in cima e scorriamo verso il basso
             if (diff > 0 && modalContent.scrollTop <= 0) {
                 isDragging = true;
                 e.preventDefault();
-                // AGGIUNGIAMO RESISTENZA: moltiplichiamo diff * 0.4 
-                // Il form si muoverà molto più lentamente del dito
                 modalContent.style.transform = `translateY(${diff * 0.4}px)`;
-                modalContent.style.transition = 'none'; // Togliamo la transizione mentre trasciniamo
+                modalContent.style.transition = 'none';
             }
         }, {passive: false});
 
         modalContent.addEventListener('touchend', e => {
             if (!isDragging) return;
-            
             const diff = e.changedTouches[0].clientY - touchStartY;
             modalContent.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
-            
-            // SOGLIA PIÙ ALTA: deve scorrere almeno di 200px per chiudersi davvero
-            if (diff > 200) {
-                closeModal();
-            } else {
-                modalContent.style.transform = `translateY(0)`;
-            }
+            if (diff > 200) closeModal();
+            else modalContent.style.transform = `translateY(0)`;
             isDragging = false;
         });
 
@@ -333,60 +313,44 @@
                 const data = await response.json();
                 databaseLocale = data.us || [];
                 if (data.strutturaObj) dataStruttura = data.strutturaObj;
-                
-                // Se ritorniamo da una ricerca salvata, manteniamo il livello US_LIST
-                if (!isSearchReturn) {
-                    render();
-                } else {
+                if (!isSearchReturn) render();
+                else {
                     currentLevel = "US_LIST";
-                    document.getElementById('search-input').value = ""; // Pulisci la barra di ricerca
+                    document.getElementById('search-input').value = "";
                     render();
                 }
             } catch (e) { showToast("Errore connessione"); }
             finally { document.getElementById('loader').style.display = 'none'; }
         }
 
-       // NAVIGAZIONE BLINDATA
         function navTo(level, name = "") {
-            console.log("Navigo a:", level, "con nome:", name); // Questo ci serve per capire se clicca
             document.getElementById('search-input').value = ""; 
-            
             if (level === 'HOME') {
                 path.scavo = ""; path.cantiere = ""; path.quadrante = "";
                 currentLevel = "HOME";
             } else if (level === 'CANTIERE') {
-                path.scavo = name; // Qui name è il nome dello Scavo
-                path.cantiere = ""; path.quadrante = "";
+                path.scavo = name; path.cantiere = ""; path.quadrante = "";
                 currentLevel = "CANTIERE";
             } else if (level === 'QUADRANTE') {
-                path.cantiere = name; // Qui name è il nome del Cantiere
-                path.quadrante = "";
+                path.cantiere = name; path.quadrante = "";
                 currentLevel = "QUADRANTE";
             }
             render();
         }
 
-        // FUNZIONE PER TORNARE INDIETRO DI UN LIVELLO
         function goBack() {
-            if (currentLevel === "CANTIERE") {
-                navTo('HOME');
-            } else if (currentLevel === "QUADRANTE") {
-                navTo('CANTIERE', path.scavo);
-            } else if (currentLevel === "US_LIST") {
-                navTo('QUADRANTE', path.cantiere);
-            }
+            if (currentLevel === "CANTIERE") navTo('HOME');
+            else if (currentLevel === "QUADRANTE") navTo('CANTIERE', path.scavo);
+            else if (currentLevel === "US_LIST") navTo('QUADRANTE', path.cantiere);
         }
 
         function render() {
-            grid.innerHTML = ""; 
-            addButton.style.display = "flex"; 
+            grid.innerHTML = ""; addButton.style.display = "flex"; 
             const backArrow = document.getElementById('back-arrow');
             
-            // Gestione visibilità freccia e testo Breadcrumb
             let bcText = "Home";
-            if (currentLevel === "HOME") {
-                backArrow.style.display = "none";
-            } else {
+            if (currentLevel === "HOME") backArrow.style.display = "none";
+            else {
                 backArrow.style.display = "flex";
                 if (path.scavo) bcText = path.scavo;
                 if (path.cantiere) bcText += ` > ${path.cantiere}`;
@@ -394,7 +358,6 @@
             }
             breadcrumb.innerHTML = bcText;
 
-            // Visualizzazione Griglia
             if (currentLevel === "HOME") {
                 Object.keys(dataStruttura).forEach(s => createBox(s, "🏗️", () => navTo('CANTIERE', s)));
             } else if (currentLevel === "CANTIERE") {
@@ -416,43 +379,20 @@
 
         function createBox(text, icon, onClick) {
             const div = document.createElement('div'); div.className = 'box';
-            // Fix per gestire nomi con apostrofi nella cancellazione
             const safeText = text.replace(/'/g, "\\'");
             div.innerHTML = `<div class='delete-btn' onclick='event.stopPropagation(); deleteItem(\`${safeText}\`)'>✕</div><div class='box-icon'>${icon}</div>${text}`;
-            div.onclick = onClick; 
-            grid.appendChild(div);
+            div.onclick = onClick; grid.appendChild(div);
         }
 
         function cercaUS(q) {
             q = q.trim().toLowerCase(); if(!q) { render(); return; }
             addButton.style.display = "none"; 
-            breadcrumb.innerHTML = `<span>Risultati ricerca per: "${q}"</span>`; 
+            breadcrumb.innerHTML = `<span>Risultati per: "${q}"</span>`; 
             grid.innerHTML = "";
-            
             databaseLocale.filter(u => String(u.Numero_US).includes(q)).forEach(us => {
-                const div = document.createElement('div'); 
-                div.className = 'box'; 
-                div.style.minHeight="60px"; 
-                div.style.alignItems="flex-start";
-                
-                // AGGIUNTO: Tasto elimina (X) anche qui!
-                div.innerHTML = `
-                    <div class='delete-btn' onclick='event.stopPropagation(); eliminaUS("${us.Numero_US}")'>✕</div>
-                    <div style='width:100%; display:flex; justify-content:space-between; padding-left:10px;'>
-                        <b>US ${us.Numero_US}</b>
-                        <small>${us.Tipo_US}</small>
-                    </div>
-                    <div style='font-size:10px; color:var(--accent-pink); padding-left:10px;'>
-                        📍 ${us.Scavo} | ${us.Cantiere} | ${us.Quadrante}
-                    </div>`;
-                
-                div.onclick = () => { 
-                    path.scavo = us.Scavo; 
-                    path.cantiere = us.Cantiere; 
-                    path.quadrante = us.Quadrante; 
-                    openForm(us, true); 
-                }; 
-                grid.appendChild(div);
+                const div = document.createElement('div'); div.className = 'box'; div.style.minHeight="60px"; div.style.alignItems="flex-start";
+                div.innerHTML = `<div class='delete-btn' onclick='event.stopPropagation(); eliminaUS("${us.Numero_US}")'>✕</div><div style='width:100%; display:flex; justify-content:space-between; padding-left:10px;'><b>US ${us.Numero_US}</b><small>${us.Tipo_US}</small></div><div style='font-size:10px; color:var(--accent-pink); padding-left:10px;'>📍 ${us.Scavo} | ${us.Cantiere} | ${us.Quadrante}</div>`;
+                div.onclick = () => { path.scavo = us.Scavo; path.cantiere = us.Cantiere; path.quadrante = us.Quadrante; openForm(us, true); }; grid.appendChild(div);
             });
         }
 
@@ -462,22 +402,17 @@
             if (currentLevel === "HOME") dataStruttura[nuovo] = {};
             else if (currentLevel === "CANTIERE") dataStruttura[path.scavo][nuovo] = [];
             else if (currentLevel === "QUADRANTE") dataStruttura[path.scavo][path.cantiere].push(nuovo);
-            
             render(); 
-            // Aggiorna Google Sheets in background
             fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "SAVE_STRUTTURA", struttura: dataStruttura }) });
             showToast("Aggiunto!");
         }
 
-        // --- CANCELLAZIONE BOX CORRETTA ---
         function deleteItem(i) {
             if(!confirm(`Vuoi davvero eliminare ${i}?`)) return;
             if(currentLevel === "HOME") delete dataStruttura[i];
             else if(currentLevel === "CANTIERE") delete dataStruttura[path.scavo][i];
             else if(currentLevel === "QUADRANTE") dataStruttura[path.scavo][path.cantiere] = dataStruttura[path.scavo][path.cantiere].filter(q => q !== i);
-            
             render(); 
-            // Aggiorna Google Sheets in background
             fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "SAVE_STRUTTURA", struttura: dataStruttura }) });
             showToast("Eliminato!");
         }
@@ -491,7 +426,6 @@
         }
 
         let isFromSearch = false;
-
         function openForm(d = null, fromSearch = false) {
             isFromSearch = fromSearch;
             document.getElementById('form-context').value = `${path.scavo} | ${path.cantiere} | ${path.quadrante}`;
@@ -545,12 +479,7 @@
                 descrizione: document.getElementById('descrizione').value, interpretazione: document.getElementById('interpretazione').value
             };
             fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(p) })
-            .then(() => { 
-                showToast("US Salvata!"); 
-                btn.disabled = false; 
-                closeModal(); 
-                caricaDatiDalDatabase(isFromSearch); // Se è true, caricaDatiDalDatabase ti riporterà al quadrante!
-            })
+            .then(() => { showToast("US Salvata!"); btn.disabled = false; closeModal(); caricaDatiDalDatabase(isFromSearch); })
             .catch(() => { showToast("Errore!"); btn.disabled = false; document.getElementById('loader').style.display = 'none'; });
         }
 
