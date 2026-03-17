@@ -13,7 +13,7 @@
             --bg-color: #fff5f8;
         }
 
-        /* Impedisce il pull-to-refresh */
+        /* Impedisce il ricaricamento trascinando verso il basso */
         html, body { 
             overscroll-behavior-y: contain; 
             overflow: hidden;
@@ -77,7 +77,7 @@
         input[readonly] { background-color: #f2f2f2; color: #888; }
         .btn-save { width: 100%; padding: 15px; background: var(--accent-pink); color: white; border: none; border-radius: 15px; font-size: 18px; font-weight: bold; margin-top: 10px; cursor: pointer; }
 
-        /* --- LOADER ARCHEOLOGICO --- */
+        /* --- NUOVO LOADER TAVOLETTA CUNEIFORME --- */
         .loader-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: var(--bg-color); display: none; flex-direction: column;
@@ -85,25 +85,32 @@
         }
 
         .archaeo-icon {
-            width: 120px; height: 120px; fill: none; stroke: var(--accent-pink);
-            stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
-            display: none; transform-box: fill-box;
+            width: 160px; height: 160px; fill: none; stroke: var(--accent-pink);
+            stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+            transform-box: fill-box;
         }
 
-        .show-icon { display: block !important; }
-
-        /* Animazione CAZZUOLA */
-        .trowel-anim { animation: digging 1.5s ease-in-out infinite; transform-origin: center; }
-        @keyframes digging {
-            0%, 100% { transform: rotate(-15deg) translate(0, 0); }
-            50% { transform: rotate(20deg) translate(15px, 5px); }
+        /* Il pennello che spolvera */
+        .brush-anim { 
+            animation: dusting 1.2s ease-in-out infinite; 
+            transform-origin: top center; 
         }
 
-        /* Animazione PENNELLO */
-        .brush-anim { animation: dusting 1s ease-in-out infinite; transform-origin: top center; }
+        /* La polvere che compare */
+        .dust-particle {
+            animation: puff 1.2s ease-in-out infinite;
+            fill: var(--accent-pink);
+            stroke: none;
+        }
+
         @keyframes dusting {
-            0%, 100% { transform: rotate(-25deg); }
-            50% { transform: rotate(25deg); }
+            0%, 100% { transform: rotate(-22deg) translateX(-8px); }
+            50% { transform: rotate(22deg) translateX(8px); }
+        }
+
+        @keyframes puff {
+            0%, 100% { opacity: 0; transform: translateY(0) scale(0.5); }
+            50% { opacity: 0.6; transform: translateY(-12px) scale(1.2); }
         }
 
         /* NOTIFICHE TOAST */
@@ -119,23 +126,23 @@
 <body>
 
     <div id="loader" class="loader-container">
-        <svg id="icon-sync" class="archaeo-icon" viewBox="0 0 64 64">
-            <path d="M10 50 Q 32 40 54 50" opacity="0.3" stroke-dasharray="4 4" />
-            <g class="trowel-anim">
-                <path d="M32 20 L48 36 L32 52 L16 36 Z" />
-                <path d="M32 20 L32 10 Q 32 6 28 6 L24 6" />
+        <svg class="archaeo-icon" viewBox="0 0 64 64">
+            <path d="M15 15 L48 12 L52 45 L40 55 L12 50 L10 28 Z" opacity="0.3" fill="none" stroke-width="2.5"/>
+            <path d="M30 13 L33 22 L28 32" opacity="0.2" /> <g opacity="0.7" fill="var(--accent-pink)">
+                <path d="M22 20 l3 5 l-6 0 z" /> <path d="M28 22 l2 4 l-4 0 z" /> <path d="M34 19 l3 5 l-6 0 z" />
+                <path d="M20 30 l3 5 l-6 0 z" /> <path d="M26 31 l4 2 l-2 -4 z" /> <path d="M38 28 l2 5 l-4 0 z" />
+                <path d="M22 40 l4 2 l-2 -4 z" /> <path d="M31 42 l2 4 l-4 0 z" /> <path d="M38 41 l5 2 l-2 -5 z" />
             </g>
-        </svg>
 
-        <svg id="icon-save" class="archaeo-icon" viewBox="0 0 64 64">
-            <rect x="18" y="12" width="28" height="40" rx="3" opacity="0.4" />
-            <path d="M24 20 H40 M24 28 H40 M24 36 H35" opacity="0.6" />
+            <circle class="dust-particle" cx="30" cy="18" r="1.2" />
+            <circle class="dust-particle" cx="42" cy="22" r="0.8" style="animation-delay: 0.3s;"/>
+            <circle class="dust-particle" cx="20" cy="25" r="1" style="animation-delay: 0.6s;"/>
+
             <g class="brush-anim">
-                <path d="M40 10 L40 25 M36 25 L44 25 L46 35 L34 35 Z" />
-            </g>
+                <rect x="30" y="2" width="4" height="18" rx="1" fill="var(--accent-pink)" /> 
+                <path d="M26 20 L38 20 L42 35 L22 35 Z" fill="var(--bg-color)" stroke-width="2" /> </g>
         </svg>
-
-        <div id="loader-text" style="margin-top: 15px; color: var(--accent-pink); font-weight: bold; font-size: 16px; letter-spacing: 1px;">CARICAMENTO...</div>
+        <div id="loader-text" style="margin-top: 15px; color: var(--accent-pink); font-weight: bold; font-size: 16px; letter-spacing: 1px;">ANALISI REPERTI...</div>
     </div>
 
     <div id="toast">Messaggio</div>
@@ -232,8 +239,7 @@
 
         function showToast(msg) {
             const t = document.getElementById('toast');
-            t.innerText = msg;
-            t.classList.add('show');
+            t.innerText = msg; t.classList.add('show');
             setTimeout(() => t.classList.remove('show'), 3000);
         }
 
@@ -243,8 +249,7 @@
             const touchY = e.touches[0].clientY;
             const diff = touchY - touchStartY;
             if (diff > 0 && modalContent.scrollTop <= 0) {
-                e.preventDefault();
-                modalContent.style.transform = `translateY(${diff}px)`;
+                e.preventDefault(); modalContent.style.transform = `translateY(${diff}px)`;
             }
         }, {passive: false});
         modalContent.addEventListener('touchend', e => {
@@ -262,11 +267,8 @@
         });
 
         async function caricaDatiDalDatabase() {
-            document.getElementById('icon-sync').classList.add('show-icon');
-            document.getElementById('icon-save').classList.remove('show-icon');
             document.getElementById('loader-text').innerText = "SINCRONIZZAZIONE...";
             document.getElementById('loader').style.display = 'flex';
-            
             try {
                 const response = await fetch(SCRIPT_URL);
                 const data = await response.json();
@@ -282,10 +284,16 @@
             showToast("Struttura aggiornata");
         }
 
-        function render() {
-            grid.innerHTML = "";
-            addButton.style.display = "flex"; 
+        function eliminaUS(numero_us) {
+            if(!confirm(`Vuoi davvero eliminare l'US ${numero_us}?`)) return;
+            databaseLocale = databaseLocale.filter(us => String(us.Numero_US) !== String(numero_us));
+            render();
+            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "DELETE_US", scavo: path.scavo, cantiere: path.cantiere, quadrante: path.quadrante, numero_us: numero_us }) })
+            .then(() => { showToast("US eliminata"); caricaDatiDalDatabase(); });
+        }
 
+        function render() {
+            grid.innerHTML = ""; addButton.style.display = "flex"; 
             let bcHTML = `<span onclick="resetNav()" style="text-decoration:underline;">Home</span>`;
             if (path.scavo) bcHTML += ` > <span onclick="selectScavo('${path.scavo}')" style="text-decoration:underline;">${path.scavo}</span>`;
             if (path.cantiere) bcHTML += ` > <span onclick="selectCantiere('${path.cantiere}')" style="text-decoration:underline;">${path.cantiere}</span>`;
@@ -294,14 +302,11 @@
 
             if (currentLevel === "HOME") {
                 Object.keys(dataStruttura).forEach(s => createBox(s, "🏗️", () => selectScavo(s), () => deleteItem(s)));
-            } 
-            else if (currentLevel === "CANTIERE") {
+            } else if (currentLevel === "CANTIERE") {
                 Object.keys(dataStruttura[path.scavo] || {}).forEach(c => createBox(c, "🚧", () => selectCantiere(c), () => deleteItem(c)));
-            } 
-            else if (currentLevel === "QUADRANTE") {
+            } else if (currentLevel === "QUADRANTE") {
                 (dataStruttura[path.scavo][path.cantiere] || []).forEach(q => createBox(q, "🟦", () => { path.quadrante = q; currentLevel = "US_LIST"; render(); }, () => deleteItem(q)));
-            }
-            else if (currentLevel === "US_LIST") {
+            } else if (currentLevel === "US_LIST") {
                 const filtrat = databaseLocale.filter(u => u.Scavo == path.scavo && u.Cantiere == path.cantiere && u.Quadrante == path.quadrante);
                 if(filtrat.length === 0) grid.innerHTML = "<p style='grid-column:1/-1;text-align:center;color:gray;'>Nessuna US. Clicca +</p>";
                 filtrat.forEach(us => {
@@ -330,8 +335,7 @@
 
         function handleFabClick() {
             if (currentLevel === "US_LIST") { openForm(); return; }
-            const nuovo = prompt("Inserisci nome:");
-            if (!nuovo) return;
+            const nuovo = prompt("Inserisci nome:"); if (!nuovo) return;
             if (currentLevel === "HOME") dataStruttura[nuovo] = {};
             else if (currentLevel === "CANTIERE") dataStruttura[path.scavo][nuovo] = [];
             else if (currentLevel === "QUADRANTE") dataStruttura[path.scavo][path.cantiere].push(nuovo);
@@ -354,7 +358,6 @@
             const preview = document.getElementById('preview_foto');
             const saveBtnText = document.getElementById('save-btn-text');
             rapportiDati = [];
-            
             if(d) {
                 const map = { "Copre": d.Copre, "È coperto da": d.Coperto_da, "Taglia": d.Taglia, "È tagliato da": d.Tagliato_da, "Riempie": d.Riempie, "È riempito da": d.Riempito_da };
                 Object.keys(map).forEach(t => { if(map[t]) map[t].toString().split(',').forEach(n => { if(n.trim()) rapportiDati.push({id: Math.random(), tipo: t, num: n.trim()}); })});
@@ -362,7 +365,6 @@
                 document.getElementById('tipo_us').value = (d.Tipo_US || "piano").toLowerCase();
                 document.getElementById('descrizione').value = d.Descrizione || "";
                 document.getElementById('interpretazione').value = d.Interpretazione || "";
-                
                 let url = d.Link || d.link || d.LINK || d.URL || "";
                 if(url && url.length > 10) {
                     if(url.includes("drive.google.com")) {
@@ -388,14 +390,10 @@
         const toB64 = f => new Promise((res, rej) => { const r = new FileReader(); r.readAsDataURL(f); r.onload = () => res(r.result); r.onerror = e => rej(e); });
 
         async function salvaDati() {
-            document.getElementById('icon-save').classList.add('show-icon');
-            document.getElementById('icon-sync').classList.remove('show-icon');
             document.getElementById('loader-text').innerText = "ARCHIVIAZIONE US...";
             document.getElementById('loader').style.display = 'flex';
-
             const btn = document.getElementById('save-btn-text'); btn.innerText = "Invio..."; btn.disabled = true;
-            let fileObj = null;
-            const fInput = document.getElementById('file_foto');
+            let fileObj = null; const fInput = document.getElementById('file_foto');
             if(fInput.files.length > 0) {
                 const f = fInput.files[0]; const b64 = await toB64(f);
                 fileObj = { base64: b64.split(',')[1], type: f.type };
