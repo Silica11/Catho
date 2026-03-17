@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -273,7 +274,6 @@
         const modal = document.getElementById('form-modal');
         const chipsArea = document.getElementById('chips-area');
 
-        // MOSTRA ANTEPRIMA IN TEMPO REALE
         document.getElementById('file_foto').addEventListener('change', function(event) {
             const file = event.target.files[0];
             const preview = document.getElementById('preview_foto');
@@ -368,11 +368,9 @@
                         div.className = 'box';
                         div.style.height = "50px"; div.style.padding = "5px 15px"; div.style.flexDirection = "row";
                         div.style.justifyContent = "space-between"; div.style.border = "1px dashed var(--accent-pink)";
-                        
                         const xBtn = document.createElement('div');
                         xBtn.className = 'delete-btn'; xBtn.innerText = '✕';
                         xBtn.onclick = (e) => { e.stopPropagation(); eliminaUS(us.Numero_US); };
-                        
                         const textDiv = document.createElement('div');
                         textDiv.style.display = "flex"; textDiv.style.justifyContent = "space-between"; textDiv.style.width = "100%"; textDiv.style.alignItems = "center";
                         textDiv.innerHTML = `
@@ -462,31 +460,30 @@
                 document.getElementById('descrizione').value = dati.Descrizione || "";
                 document.getElementById('interpretazione').value = dati.Interpretazione || "";
                 
-                // --- DEBUG: Vediamo cosa legge l'app ---
-                console.log("Dati ricevuti per la foto:", dati); // Questo serve a noi per spiare
-                
-                // Prova a prendere il link in tutti i modi possibili (maiuscolo o minuscolo)
                 let urlFoto = dati.Link || dati.link || dati.LINK || ""; 
-                
                 if (urlFoto && urlFoto.trim() !== "" && urlFoto !== "SÌ" && urlFoto !== "NO") {
-                    // Trasformiamo il link di Drive in un'immagine visibile
                     if (urlFoto.includes("drive.google.com")) {
                         const fileId = urlFoto.match(/[-\w]{25,}/); 
-                        if (fileId) {
-                            urlFoto = `https://drive.google.com/uc?id=${fileId[0]}`;
-                        }
+                        if (fileId) urlFoto = `https://drive.google.com/uc?id=${fileId[0]}`;
                     }
-                    
                     preview.src = urlFoto;
                     preview.style.display = 'block';
-                    console.log("URL trasformato caricato:", urlFoto);
                 } else {
-                    console.log("Nessun link trovato o dato non valido:", urlFoto);
                     preview.src = '';
                     preview.style.display = 'none';
                 }
+                btn.innerText = "AGGIORNA DATI";
+            } else {
+                document.getElementById('num_us').value = ""; 
+                document.getElementById('descrizione').value = ""; 
+                document.getElementById('interpretazione').value = "";
+                preview.src = '';
+                preview.style.display = 'none';
+                btn.innerText = "INVIA DATI";
+            }
             document.getElementById('file_foto').value = "";
-            renderChips(); modal.style.display = 'flex';
+            renderChips(); 
+            modal.style.display = 'flex';
         }
 
         function closeModal() { modal.style.display = 'none'; }
