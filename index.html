@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>US Digitali - ArcheoApp</title>
     <style>
         :root {
@@ -12,6 +11,13 @@
             --dark-text: #4a4a4a;
             --white: #ffffff;
             --bg-color: #fff5f8;
+        }
+
+        /* Impedisce il ricaricamento trascinando verso il basso */
+        html, body { 
+            overscroll-behavior-y: contain; 
+            overflow: hidden;
+            height: 100%;
         }
 
         body {
@@ -23,119 +29,50 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            overflow-y: auto;
         }
 
-        .header-container {
-            width: 100%;
-            max-width: 500px;
-            margin-bottom: 20px;
-        }
-
-        .search-bar {
-            width: 100%;
-            padding: 12px 20px;
-            border-radius: 25px;
-            border: none;
-            background: var(--white);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            font-size: 16px;
-            outline: none;
-            box-sizing: border-box;
-        }
-
-        .breadcrumb {
-            margin-top: 15px;
-            font-size: 18px;
-            color: var(--accent-pink);
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .grid-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            width: 100%;
-            max-width: 500px;
-        }
+        .header-container { width: 100%; max-width: 500px; margin-bottom: 20px; }
+        .search-bar { width: 100%; padding: 12px 20px; border-radius: 25px; border: none; background: var(--white); box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-size: 16px; outline: none; box-sizing: border-box; }
+        .breadcrumb { margin-top: 15px; font-size: 18px; color: var(--accent-pink); cursor: pointer; font-weight: bold; }
+        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 500px; padding-bottom: 100px; }
 
         .box {
-            background: var(--white);
-            padding: 20px 15px;
-            border-radius: 20px;
-            text-align: center;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
-            border: 2px solid var(--primary-pink);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 90px;
-            position: relative;
+            background: var(--white); padding: 20px 15px; border-radius: 20px; text-align: center;
+            font-weight: 600; cursor: pointer; transition: transform 0.2s; border: 2px solid var(--primary-pink);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 90px; position: relative;
         }
 
         .delete-btn {
-            position: absolute;
-            top: -10px;
-            left: -10px;
-            background: #ff5252;
-            color: white;
-            border-radius: 50%;
-            width: 26px;
-            height: 26px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            cursor: pointer;
-            z-index: 10;
-            border: 2px solid white;
+            position: absolute; top: -10px; left: -10px; background: #ff5252; color: white; border-radius: 50%;
+            width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); cursor: pointer; z-index: 10; border: 2px solid white;
         }
 
         .box:active { transform: scale(0.95); }
         .box-icon { font-size: 24px; margin-bottom: 10px; }
 
         .fab {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 60px;
-            height: 60px;
-            background-color: var(--accent-pink);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 30px;
-            box-shadow: 0 4px 15px rgba(240, 98, 146, 0.4);
-            cursor: pointer;
-            z-index: 999;
+            position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background-color: var(--accent-pink);
+            color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 30px; box-shadow: 0 4px 15px rgba(240, 98, 146, 0.4); cursor: pointer; z-index: 999;
         }
 
+        /* MODAL E GESTI */
         .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.4);
-            display: none;
-            justify-content: center;
-            align-items: flex-end;
-            z-index: 1000;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4);
+            display: none; justify-content: center; align-items: flex-end; z-index: 1000;
         }
 
         .modal-content {
-            background: var(--white);
-            width: 100%;
-            max-width: 500px;
-            max-height: 90%;
-            border-radius: 30px 30px 0 0;
-            padding: 25px;
-            overflow-y: auto;
-            box-sizing: border-box;
+            background: var(--white); width: 100%; max-width: 500px; max-height: 92%;
+            border-radius: 30px 30px 0 0; padding: 15px 25px 40px 25px; overflow-y: auto;
+            box-sizing: border-box; transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            position: relative; touch-action: pan-y;
+        }
+
+        .drag-handle {
+            width: 40px; height: 5px; background: #ddd; border-radius: 3px; margin: 0 auto 15px auto;
         }
 
         .form-group { margin-bottom: 15px; }
@@ -143,62 +80,47 @@
         input, select, textarea { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--primary-pink); font-size: 16px; box-sizing: border-box; }
         input[readonly] { background-color: #f2f2f2; color: #888; }
 
-        .rapporti-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        .btn-rapporto { padding: 10px; border-radius: 10px; border: 1px solid var(--accent-pink); background: white; color: var(--accent-pink); cursor: pointer; font-size: 12px; }
-        
-        .chip-container { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
-        .chip { background: var(--primary-pink); padding: 5px 10px; border-radius: 15px; font-size: 13px; display: flex; align-items: center; }
-        .close-chip { margin-left: 8px; color: red; font-weight: bold; cursor: pointer; }
-
         .btn-save { width: 100%; padding: 15px; background: var(--accent-pink); color: white; border: none; border-radius: 15px; font-size: 18px; font-weight: bold; margin-top: 10px; cursor: pointer; }
 
-        .loader-container {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: var(--bg-color);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
+        /* LOADER */
+        .loader-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--bg-color); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+        .spinner { width: 60px; height: 60px; border: 6px solid var(--primary-pink); border-top: 6px solid var(--accent-pink); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* NOTIFICHE TOAST */
+        #toast {
+            position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
+            background: var(--accent-pink); color: white; padding: 12px 25px;
+            border-radius: 25px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 10001; transition: bottom 0.4s ease; font-weight: bold; text-align: center; min-width: 200px;
         }
-        
-        .spinner {
-            width: 60px;
-            height: 60px;
-            border: 6px solid var(--primary-pink);
-            border-top: 6px solid var(--accent-pink);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        #toast.show { bottom: 40px; }
     </style>
 </head>
 <body>
+
     <div id="loader" class="loader-container">
         <div class="spinner"></div>
-        <div style="margin-top: 20px; color: var(--accent-pink); font-weight: bold; font-size: 18px;">Sincronizzazione database...</div>
+        <div style="margin-top: 20px; color: var(--accent-pink); font-weight: bold; font-size: 18px;">Sincronizzazione...</div>
     </div>
-    
+
+    <div id="toast">Messaggio</div>
+
     <div class="header-container">
-        <input type="text" id="search-input" class="search-bar" placeholder="Cerca US per numero..." oninput="cercaUS(this.value)">
+        <input type="text" id="search-input" class="search-bar" placeholder="Cerca US..." oninput="cercaUS(this.value)">
         <div id="breadcrumb" class="breadcrumb" onclick="resetNav()">Home</div>
     </div>
 
     <div id="main-grid" class="grid-container"></div>
-
     <div id="add-button" class="fab" onclick="handleFabClick()">+</div>
 
-    <div id="form-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h2 style="text-align:center; color: var(--accent-pink);">Scheda US</h2>
+    <div id="form-modal" class="modal-overlay" onclick="handleOverlayClick(event)">
+        <div class="modal-content" id="modal-content">
+            <div class="drag-handle"></div>
+            <h2 style="text-align:center; color: var(--accent-pink); margin-top:0;">Scheda US</h2>
             
             <div class="form-group">
-                <label>Contesto (Sola Lettura)</label>
+                <label>Contesto</label>
                 <input type="text" id="form-context" readonly>
             </div>
 
@@ -227,35 +149,32 @@
             </div>
 
             <div class="form-group">
-                <label>Foto Effettuata?</label>
-                <input type="checkbox" id="check_foto" style="width: auto;">
-                <input type="file" id="file_foto" accept="image/*" style="margin-top: 10px;">
+                <label>Foto</label>
+                <input type="file" id="file_foto" accept="image/*" style="margin-top: 5px;">
                 <img id="preview_foto" src="" style="width: 100%; margin-top: 10px; border-radius: 12px; display: none; border: 1px solid var(--primary-pink);">
             </div>
 
             <label>Rapporti Stratigrafici</label>
-            <div class="rapporti-grid">
-                <button type="button" class="btn-rapporto" onclick="addRapporto('Copre')">Copre</button>
-                <button type="button" class="btn-rapporto" onclick="addRapporto('È coperto da')">È coperto da</button>
-                <button type="button" class="btn-rapporto" onclick="addRapporto('Riempie')">Riempie</button>
-                <button type="button" class="btn-rapporto" onclick="addRapporto('È riempito da')">È riempito da</button>
-                <button type="button" class="btn-rapporto" onclick="addRapporto('Taglia')">Taglia</button>
-                <button type="button" class="btn-rapporto" onclick="addRapporto('È tagliato da')">È tagliato da</button>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px;">
+                <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('Copre')">Copre</button>
+                <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('È coperto da')">Coperto da</button>
+                <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('Riempie')">Riempie</button>
+                <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('È riempito da')">Riempito da</button>
             </div>
-            <div id="chips-area" class="chip-container"></div>
+            <div id="chips-area" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:10px;"></div>
 
             <div class="form-group" style="margin-top:15px;">
-                <label>Descrizione (Dati oggettivi)</label>
-                <textarea id="descrizione" rows="3" placeholder="Es: Terreno sabbioso bruno..."></textarea>
+                <label>Descrizione</label>
+                <textarea id="descrizione" rows="3"></textarea>
             </div>
 
             <div class="form-group">
-                <label>Interpretazione (Dati soggettivi)</label>
-                <textarea id="interpretazione" rows="3" placeholder="Es: Riempimento di buca..."></textarea>
+                <label>Interpretazione</label>
+                <textarea id="interpretazione" rows="3"></textarea>
             </div>
 
-            <button class="btn-save" onclick="salvaDati()">INVIA DATI</button>
-            <button onclick="closeModal()" style="width:100%; background:none; border:none; color:gray; margin-top:10px; cursor:pointer;">Annulla</button>
+            <button class="btn-save" id="save-btn-text" onclick="salvaDati()">INVIA DATI</button>
+            <button onclick="closeModal()" style="width:100%; background:none; border:none; color:gray; margin-top:15px; cursor:pointer;">Annulla</button>
         </div>
     </div>
 
@@ -272,18 +191,40 @@
         const breadcrumb = document.getElementById('breadcrumb');
         const addButton = document.getElementById('add-button');
         const modal = document.getElementById('form-modal');
+        const modalContent = document.getElementById('modal-content');
         const chipsArea = document.getElementById('chips-area');
 
-        document.getElementById('file_foto').addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            const preview = document.getElementById('preview_foto');
-            if (file) {
-                preview.src = URL.createObjectURL(file);
-                preview.style.display = 'block';
-            } else {
-                preview.src = '';
-                preview.style.display = 'none';
+        // NOTIFICA PERSONALIZZATA
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        // GESTIONE SWIPE DOWN PER CHIUDERE IL FORM
+        let touchStartY = 0;
+        modalContent.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; }, {passive: true});
+        modalContent.addEventListener('touchmove', e => {
+            const touchY = e.touches[0].clientY;
+            const diff = touchY - touchStartY;
+            if (diff > 0 && modalContent.scrollTop <= 0) {
+                e.preventDefault();
+                modalContent.style.transform = `translateY(${diff}px)`;
             }
+        }, {passive: false});
+        modalContent.addEventListener('touchend', e => {
+            const diff = e.changedTouches[0].clientY - touchStartY;
+            if (diff > 150) closeModal();
+            else modalContent.style.transform = `translateY(0)`;
+        });
+
+        function handleOverlayClick(e) { if(e.target === modal) closeModal(); }
+
+        document.getElementById('file_foto').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('preview_foto');
+            if (file) { preview.src = URL.createObjectURL(file); preview.style.display = 'block'; }
         });
 
         async function caricaDatiDalDatabase() {
@@ -292,224 +233,147 @@
                 const response = await fetch(SCRIPT_URL);
                 const data = await response.json();
                 databaseLocale = data.us || [];
-                if (data.strutturaObj && Object.keys(data.strutturaObj).length > 0) {
-                    dataStruttura = data.strutturaObj;
-                }
+                if (data.strutturaObj) dataStruttura = data.strutturaObj;
                 render(); 
-            } catch (e) {
-                console.error("Errore caricamento dati:", e);
-                alert("Impossibile caricare i dati.");
-            } finally {
-                document.getElementById('loader').style.display = 'none';
-            }
+            } catch (e) { showToast("Errore connessione"); }
+            finally { document.getElementById('loader').style.display = 'none'; }
         }
 
         function salvaStrutturaInCloud() {
-            fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify({ action: "SAVE_STRUTTURA", struttura: dataStruttura })
-            });
+            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "SAVE_STRUTTURA", struttura: dataStruttura }) });
+            showToast("Struttura aggiornata");
         }
 
         function eliminaUS(numero_us) {
             if(!confirm(`Vuoi davvero eliminare l'US ${numero_us}?`)) return;
             databaseLocale = databaseLocale.filter(us => String(us.Numero_US) !== String(numero_us));
             render();
-            fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify({
-                    action: "DELETE_US", scavo: path.scavo, cantiere: path.cantiere, quadrante: path.quadrante, numero_us: numero_us
-                })
-            }).then(() => caricaDatiDalDatabase());
+            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "DELETE_US", scavo: path.scavo, cantiere: path.cantiere, quadrante: path.quadrante, numero_us: numero_us }) })
+            .then(() => { showToast("US eliminata"); caricaDatiDalDatabase(); });
         }
 
         function render() {
             grid.innerHTML = "";
             addButton.style.display = "flex"; 
 
-            let bcHTML = `<span onclick="event.stopPropagation(); resetNav()" style="cursor:pointer; text-decoration:underline;">Home</span>`;
-            if (currentLevel === "CANTIERE" || currentLevel === "QUADRANTE" || currentLevel === "US_LIST") {
-                bcHTML += ` > <span onclick="event.stopPropagation(); selectScavo('${path.scavo}')" style="cursor:pointer; text-decoration:underline;">${path.scavo}</span>`;
-            }
-            if (currentLevel === "QUADRANTE" || currentLevel === "US_LIST") {
-                bcHTML += ` > <span onclick="event.stopPropagation(); selectCantiere('${path.cantiere}')" style="cursor:pointer; text-decoration:underline;">${path.cantiere}</span>`;
-            }
-            if (currentLevel === "US_LIST") {
-                bcHTML += ` > <span style="font-weight:bold;">${path.quadrante}</span>`;
-            }
+            let bcHTML = `<span onclick="resetNav()" style="text-decoration:underline;">Home</span>`;
+            if (path.scavo) bcHTML += ` > <span onclick="selectScavo('${path.scavo}')" style="text-decoration:underline;">${path.scavo}</span>`;
+            if (path.cantiere) bcHTML += ` > <span onclick="selectCantiere('${path.cantiere}')" style="text-decoration:underline;">${path.cantiere}</span>`;
+            if (path.quadrante && currentLevel === "US_LIST") bcHTML += ` > <b>${path.quadrante}</b>`;
             breadcrumb.innerHTML = bcHTML;
 
             if (currentLevel === "HOME") {
-                if (Object.keys(dataStruttura).length === 0) grid.innerHTML = "<p style='grid-column: 1/-1; text-align: center; color: gray;'>Nessuno scavo. Clicca +</p>";
                 Object.keys(dataStruttura).forEach(s => createBox(s, "🏗️", () => selectScavo(s), () => deleteItem(s)));
             } 
             else if (currentLevel === "CANTIERE") {
-                Object.keys(dataStruttura[path.scavo]).forEach(c => createBox(c, "🚧", () => selectCantiere(c), () => deleteItem(c)));
+                Object.keys(dataStruttura[path.scavo] || {}).forEach(c => createBox(c, "🚧", () => selectCantiere(c), () => deleteItem(c)));
             } 
             else if (currentLevel === "QUADRANTE") {
-                dataStruttura[path.scavo][path.cantiere].forEach(q => createBox(q, "🟦", () => {
-                    path.quadrante = q; currentLevel = "US_LIST"; render(); caricaDatiDalDatabase(); 
-                }, () => deleteItem(q)));
+                (dataStruttura[path.scavo][path.cantiere] || []).forEach(q => createBox(q, "🟦", () => { path.quadrante = q; currentLevel = "US_LIST"; render(); }, () => deleteItem(q)));
             }
             else if (currentLevel === "US_LIST") {
-                const usFiltrate = databaseLocale.filter(us => 
-                    String(us.Scavo || "").trim().toLowerCase() === String(path.scavo).trim().toLowerCase() && 
-                    String(us.Cantiere || "").trim().toLowerCase() === String(path.cantiere).trim().toLowerCase() && 
-                    String(us.Quadrante || "").trim().toLowerCase() === String(path.quadrante).trim().toLowerCase()
-                );
-
-                if (usFiltrate.length === 0) {
-                    grid.innerHTML = "<p style='grid-column: 1/-1; text-align: center; color: gray;'>Nessuna US trovata.</p>";
-                } else {
-                    usFiltrate.forEach(us => {
-                        const div = document.createElement('div');
-                        div.className = 'box';
-                        div.style.height = "50px"; div.style.padding = "5px 15px"; div.style.flexDirection = "row";
-                        div.style.justifyContent = "space-between"; div.style.border = "1px dashed var(--accent-pink)";
-                        const xBtn = document.createElement('div');
-                        xBtn.className = 'delete-btn'; xBtn.innerText = '✕';
-                        xBtn.onclick = (e) => { e.stopPropagation(); eliminaUS(us.Numero_US); };
-                        const textDiv = document.createElement('div');
-                        textDiv.style.display = "flex"; textDiv.style.justifyContent = "space-between"; textDiv.style.width = "100%"; textDiv.style.alignItems = "center";
-                        textDiv.innerHTML = `
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <span style="font-size:10px; color:var(--accent-pink); font-weight:bold;">US</span>
-                                <span style="font-size:18px; font-weight:bold;">${us.Numero_US}</span>
-                            </div>
-                            <div style="font-size:11px; color:gray;">${us.Tipo_US}</div>
-                        `;
-                        div.appendChild(xBtn); div.appendChild(textDiv);
-                        div.onclick = () => openForm(us);
-                        grid.appendChild(div);
-                    });
-                }
+                const filtrat = databaseLocale.filter(u => u.Scavo == path.scavo && u.Cantiere == path.cantiere && u.Quadrante == path.quadrante);
+                if(filtrat.length === 0) grid.innerHTML = "<p style='grid-column:1/-1;text-align:center;color:gray;'>Nessuna US. Clicca +</p>";
+                filtrat.forEach(us => {
+                    const div = document.createElement('div'); div.className = 'box'; div.style.height="50px"; div.style.flexDirection="row"; div.style.justifyContent="space-between"; div.style.border="1px dashed var(--accent-pink)";
+                    div.innerHTML = `<div class='delete-btn' onclick='event.stopPropagation(); eliminaUS("${us.Numero_US}")'>✕</div><div style='display:flex;align-items:center;gap:10px'><span style='font-size:10px;color:var(--accent-pink);font-weight:bold'>US</span><b>${us.Numero_US}</b></div><small style='color:gray'>${us.Tipo_US}</small>`;
+                    div.onclick = () => openForm(us); grid.appendChild(div);
+                });
             }
-        }
-
-        function cercaUS(query) {
-            query = query.trim().toLowerCase();
-            if (!query) { render(); return; }
-            addButton.style.display = "none";
-            breadcrumb.innerText = "Risultati per: " + query;
-            grid.innerHTML = "";
-            const risultati = databaseLocale.filter(us => String(us.Numero_US).toLowerCase().includes(query));
-            risultati.forEach(us => {
-                const div = document.createElement('div');
-                div.className = 'box'; div.style.minHeight = "60px"; div.style.alignItems = "flex-start";
-                const contesto = `${us.Scavo || "?"} | ${us.Cantiere || "?"} | ${us.Quadrante || "?"}`;
-                div.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                        <span style="font-size:18px; font-weight:bold;">US ${us.Numero_US}</span>
-                        <span style="font-size:11px; color:gray;">${us.Tipo_US}</span>
-                    </div>
-                    <div style="font-size:11px; color:var(--accent-pink);">📍 ${contesto}</div>
-                `;
-                div.onclick = () => { path.scavo = us.Scavo; path.cantiere = us.Cantiere; path.quadrante = us.Quadrante; openForm(us); };
-                grid.appendChild(div);
-            });
         }
 
         function createBox(text, icon, onClick, onDelete) {
-            const div = document.createElement('div');
-            div.className = 'box';
-            const xBtn = document.createElement('div');
-            xBtn.className = 'delete-btn'; xBtn.innerText = '✕';
-            xBtn.onclick = (e) => { e.stopPropagation(); if(confirm(`Eliminare ${text}?`)) onDelete(); };
-            div.innerHTML = `<div class="box-icon">${icon}</div><div>${text}</div>`;
-            div.appendChild(xBtn); div.onclick = onClick;
-            grid.appendChild(div);
+            const div = document.createElement('div'); div.className = 'box';
+            div.innerHTML = `<div class='delete-btn' onclick='event.stopPropagation(); if(confirm("Eliminare ${text}?")) onDelete("${text}")'>✕</div><div class='box-icon'>${icon}</div>${text}`;
+            div.onclick = onClick; grid.appendChild(div);
+        }
+
+        function cercaUS(q) {
+            q = q.trim().toLowerCase(); if(!q) { render(); return; }
+            addButton.style.display = "none"; breadcrumb.innerText = "Risultati: " + q; grid.innerHTML = "";
+            databaseLocale.filter(u => String(u.Numero_US).includes(q)).forEach(us => {
+                const div = document.createElement('div'); div.className = 'box'; div.style.minHeight="60px"; div.style.alignItems="flex-start";
+                div.innerHTML = `<div style='width:100%;display:flex;justify-content:space-between'><b>US ${us.Numero_US}</b><small>${us.Tipo_US}</small></div><div style='font-size:10px;color:var(--accent-pink)'>📍 ${us.Scavo} | ${us.Cantiere} | ${us.Quadrante}</div>`;
+                div.onclick = () => { path.scavo=us.Scavo; path.cantiere=us.Cantiere; path.quadrante=us.Quadrante; openForm(us); }; grid.appendChild(div);
+            });
         }
 
         function handleFabClick() {
             if (currentLevel === "US_LIST") { openForm(); return; }
-            const nuovo = prompt("Inserisci nome:");
-            if (!nuovo) return;
-            const nomePulito = nuovo.trim();
-            if (currentLevel === "HOME") dataStruttura[nomePulito] = {};
-            else if (currentLevel === "CANTIERE") dataStruttura[path.scavo][nomePulito] = [];
-            else if (currentLevel === "QUADRANTE") dataStruttura[path.scavo][path.cantiere].push(nomePulito);
+            const n = prompt("Inserisci nome:"); if(!n) return;
+            if(currentLevel === "HOME") dataStruttura[n] = {};
+            else if(currentLevel === "CANTIERE") dataStruttura[path.scavo][n] = [];
+            else if(currentLevel === "QUADRANTE") dataStruttura[path.scavo][path.cantiere].push(n);
             render(); salvaStrutturaInCloud();
         }
 
-        function deleteItem(item) {
-            if (currentLevel === "HOME") delete dataStruttura[item];
-            else if (currentLevel === "CANTIERE") delete dataStruttura[path.scavo][item];
-            else if (currentLevel === "QUADRANTE") dataStruttura[path.scavo][path.cantiere] = dataStruttura[path.scavo][path.cantiere].filter(q => q !== item);
+        function deleteItem(i) {
+            if(currentLevel === "HOME") delete dataStruttura[i];
+            else if(currentLevel === "CANTIERE") delete dataStruttura[path.scavo][i];
+            else if(currentLevel === "QUADRANTE") dataStruttura[path.scavo][path.cantiere] = dataStruttura[path.scavo][path.cantiere].filter(q => q !== i);
             render(); salvaStrutturaInCloud();
         }
 
-        function selectScavo(s) { path.scavo = s; currentLevel = "CANTIERE"; render(); }
-        function selectCantiere(c) { path.cantiere = c; currentLevel = "QUADRANTE"; render(); }
-        function resetNav() { currentLevel = "HOME"; path = {scavo:"", cantiere:"", quadrante:""}; render(); caricaDatiDalDatabase(); }
+        function selectScavo(s) { path.scavo = s; path.cantiere=""; path.quadrante=""; currentLevel = "CANTIERE"; render(); }
+        function selectCantiere(c) { path.cantiere = c; path.quadrante=""; currentLevel = "QUADRANTE"; render(); }
+        function resetNav() { path = {scavo:"", cantiere:"", quadrante:""}; currentLevel = "HOME"; render(); caricaDatiDalDatabase(); }
 
-        function openForm(dati = null) {
+        function openForm(d = null) {
             document.getElementById('form-context').value = `${path.scavo} | ${path.cantiere} | ${path.quadrante}`;
-            const btn = document.querySelector('.btn-save');
             const preview = document.getElementById('preview_foto');
             rapportiDati = [];
             
-            if(dati) {
-                const mapping = { "Copre": dati.Copre, "È coperto da": dati.Coperto_da, "Taglia": dati.Taglia, "È tagliato da": dati.Tagliato_da, "Riempie": dati.Riempie, "È riempito da": dati.Riempito_da };
-                Object.keys(mapping).forEach(tipo => {
-                    if (mapping[tipo]) { mapping[tipo].toString().split(',').forEach(num => { if(num.trim()) rapportiDati.push({ id: Math.random(), tipo: tipo, num: num.trim() }); }); }
-                });
-                document.getElementById('num_us').value = dati.Numero_US || "";
-                document.getElementById('tipo_us').value = dati.Tipo_US || "piano";
-                document.getElementById('descrizione').value = dati.Descrizione || "";
-                document.getElementById('interpretazione').value = dati.Interpretazione || "";
+            if(d) {
+                const map = { "Copre": d.Copre, "È coperto da": d.Coperto_da, "Taglia": d.Taglia, "È tagliato da": d.Tagliato_da, "Riempie": d.Riempie, "È riempito da": d.Riempito_da };
+                Object.keys(map).forEach(t => { if(map[t]) map[t].toString().split(',').forEach(n => { if(n.trim()) rapportiDati.push({id: Math.random(), tipo: t, num: n.trim()}); })});
                 
-                let urlFoto = dati.Link || dati.link || dati.LINK || ""; 
-                if (urlFoto && urlFoto.trim() !== "" && urlFoto !== "SÌ" && urlFoto !== "NO") {
-                    if (urlFoto.includes("drive.google.com")) {
-                        const fileId = urlFoto.match(/[-\w]{25,}/); 
-                        if (fileId) urlFoto = `https://drive.google.com/uc?id=${fileId[0]}`;
+                document.getElementById('num_us').value = d.Numero_US || "";
+                document.getElementById('tipo_us').value = (d.Tipo_US || "piano").toLowerCase();
+                document.getElementById('descrizione').value = d.Descrizione || "";
+                document.getElementById('interpretazione').value = d.Interpretazione || "";
+                
+                // FIX FOTO DEFINITIVO
+                let url = d.Link || d.link || d.LINK || d.URL || "";
+                if(url && url.length > 10) {
+                    if(url.includes("drive.google.com")) {
+                        const id = url.match(/[-\w]{25,}/);
+                        if(id) url = `https://drive.google.com/uc?id=${id[0]}`;
                     }
-                    preview.src = urlFoto;
-                    preview.style.display = 'block';
-                } else {
-                    preview.src = '';
-                    preview.style.display = 'none';
-                }
-                btn.innerText = "AGGIORNA DATI";
+                    preview.src = url; preview.style.display = 'block';
+                } else { preview.style.display = 'none'; }
+                document.getElementById('save-btn-text').innerText = "AGGIORNA DATI";
             } else {
-                document.getElementById('num_us').value = ""; 
-                document.getElementById('descrizione').value = ""; 
-                document.getElementById('interpretazione').value = "";
-                preview.src = '';
-                preview.style.display = 'none';
-                btn.innerText = "INVIA DATI";
+                document.getElementById('num_us').value = ""; document.getElementById('descrizione').value = ""; document.getElementById('interpretazione').value = "";
+                preview.style.display = 'none'; document.getElementById('save-btn-text').innerText = "INVIA DATI";
             }
-            document.getElementById('file_foto').value = "";
-            renderChips(); 
-            modal.style.display = 'flex';
+            document.getElementById('file_foto').value = ""; renderChips();
+            modal.style.display = 'flex'; modalContent.style.transform = 'translateY(0)';
         }
 
-        function closeModal() { modal.style.display = 'none'; }
-        function addRapporto(tipo) { const num = prompt(`Inserisci numero US:`); if (num) { rapportiDati.push({ id: Date.now(), tipo, num }); renderChips(); } }
-        function renderChips() { chipsArea.innerHTML = ""; rapportiDati.forEach(r => { const chip = document.createElement('div'); chip.className = 'chip'; chip.innerHTML = `${r.tipo}: ${r.num} <span class="close-chip" onclick="removeRapporto(${r.id})">✕</span>`; chipsArea.appendChild(chip); }); }
+        function closeModal() { modalContent.style.transform = 'translateY(100%)'; setTimeout(() => modal.style.display = 'none', 300); }
+        function addRapporto(t) { const n = prompt(`US che ${t}:`); if(n) { rapportiDati.push({id: Date.now(), tipo: t, num: n}); renderChips(); } }
+        function renderChips() { chipsArea.innerHTML = ""; rapportiDati.forEach(r => { const c = document.createElement('div'); c.style="background:var(--primary-pink);padding:5px 10px;border-radius:15px;font-size:11px"; c.innerHTML = `${r.tipo}: ${r.num} <b onclick="removeRapporto(${r.id})" style="color:red;margin-left:5px">✕</b>`; chipsArea.appendChild(c); }); }
         function removeRapporto(id) { rapportiDati = rapportiDati.filter(r => r.id !== id); renderChips(); }
 
-        const toBase64 = file => new Promise((resolve, reject) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => resolve(reader.result); reader.onerror = error => reject(error); });
+        const toB64 = f => new Promise((res, rej) => { const r = new FileReader(); r.readAsDataURL(f); r.onload = () => res(r.result); r.onerror = e => rej(e); });
 
         async function salvaDati() {
-            const btn = document.querySelector('.btn-save'); btn.innerText = "Invio..."; btn.disabled = true;
-            let fileData = null;
-            const fileInput = document.getElementById('file_foto');
-            if (fileInput.files.length > 0) {
-                const file = fileInput.files[0]; const base64 = await toBase64(file);
-                fileData = { base64: base64.split(',')[1], type: file.type };
+            const btn = document.getElementById('save-btn-text'); btn.innerText = "Invio..."; btn.disabled = true;
+            let fileObj = null;
+            const fInput = document.getElementById('file_foto');
+            if(fInput.files.length > 0) {
+                const f = fInput.files[0]; const b64 = await toB64(f);
+                fileObj = { base64: b64.split(',')[1], type: f.type };
             }
-            const payload = {
+            const p = {
                 action: "SAVE_US", scavo: path.scavo, cantiere: path.cantiere, quadrante: path.quadrante,
                 numero_us: document.getElementById('num_us').value, tipo_us: document.getElementById('tipo_us').value,
-                operatore: document.getElementById('operatore').value, fotoSpunta: document.getElementById('check_foto').checked,
-                fotoFile: fileData, rapporti: rapportiDati, descrizione: document.getElementById('descrizione').value, interpretazione: document.getElementById('interpretazione').value
+                operatore: document.getElementById('operatore').value, fotoFile: fileObj, rapporti: rapportiDati,
+                descrizione: document.getElementById('descrizione').value, interpretazione: document.getElementById('interpretazione').value
             };
-            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
-            .then(() => { alert("US Salvata!"); btn.disabled = false; btn.innerText = "INVIA DATI"; closeModal(); caricaDatiDalDatabase(); })
-            .catch(() => { alert("Errore invio"); btn.disabled = false; });
+            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(p) })
+            .then(() => { showToast("US Salvata!"); btn.disabled = false; closeModal(); caricaDatiDalDatabase(); })
+            .catch(() => { showToast("Errore!"); btn.disabled = false; });
         }
 
         caricaDatiDalDatabase();
