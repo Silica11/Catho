@@ -72,10 +72,9 @@
             align-items: center;
             justify-content: center;
             min-height: 90px;
-            position: relative; /* Per posizionare la X */
+            position: relative;
         }
 
-        /* La X tonda per eliminare */
         .delete-btn {
             position: absolute;
             top: -10px;
@@ -108,7 +107,7 @@
             background-color: var(--accent-pink);
             color: white;
             border-radius: 50%;
-            display: flex; /* Sempre flessibile, la controlliamo con il render */
+            display: flex;
             align-items: center;
             justify-content: center;
             font-size: 30px;
@@ -151,7 +150,7 @@
         .close-chip { margin-left: 8px; color: red; font-weight: bold; cursor: pointer; }
 
         .btn-save { width: 100%; padding: 15px; background: var(--accent-pink); color: white; border: none; border-radius: 15px; font-size: 18px; font-weight: bold; margin-top: 10px; cursor: pointer; }
-    /* --- SCHERMATA DI CARICAMENTO (LOADER) --- */
+
         .loader-container {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -160,7 +159,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 9999; /* Questo assicura che copra TUTTO l'app */
+            z-index: 9999;
         }
         
         .spinner {
@@ -179,7 +178,7 @@
     </style>
 </head>
 <body>
-<div id="loader" class="loader-container">
+    <div id="loader" class="loader-container">
         <div class="spinner"></div>
         <div style="margin-top: 20px; color: var(--accent-pink); font-weight: bold; font-size: 18px;">Sincronizzazione database...</div>
     </div>
@@ -260,7 +259,6 @@
     </div>
 
     <script>
-      // URL UFFICIALE E AGGIORNATO
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwrcw9ubYVb83iuzwCCg5Dsg_Bb6hwktmyaJ2sj5hcxWOZEt4rmA8M884bbaSeNhb8r/exec';
 
         let dataStruttura = {};
@@ -274,10 +272,7 @@
         const addButton = document.getElementById('add-button');
         const modal = document.getElementById('form-modal');
         const chipsArea = document.getElementById('chips-area');
-    
 
-    
-        
         // MOSTRA ANTEPRIMA IN TEMPO REALE
         document.getElementById('file_foto').addEventListener('change', function(event) {
             const file = event.target.files[0];
@@ -290,16 +285,12 @@
                 preview.style.display = 'none';
             }
         });
-        // SCARICA I DATI AL PRIMO AVVIO E AD OGNI AGGIORNAMENTO
+
         async function caricaDatiDalDatabase() {
-            // 1. Accende la rotellina di caricamento
             document.getElementById('loader').style.display = 'flex';
-            
             try {
                 const response = await fetch(SCRIPT_URL);
                 const data = await response.json();
-                
-                // Popola il database locale (US e Struttura)
                 databaseLocale = data.us || [];
                 if (data.strutturaObj && Object.keys(data.strutturaObj).length > 0) {
                     dataStruttura = data.strutturaObj;
@@ -307,14 +298,12 @@
                 render(); 
             } catch (e) {
                 console.error("Errore caricamento dati:", e);
-                alert("Impossibile caricare i dati. Controlla la connessione.");
+                alert("Impossibile caricare i dati.");
             } finally {
-                // 2. Spegne la rotellina in ogni caso (sia successo che errore)
                 document.getElementById('loader').style.display = 'none';
             }
         }
 
-        // SALVA LA STRUTTURA OGNI VOLTA CHE AGGIUNGI O ELIMINI QUALCOSA
         function salvaStrutturaInCloud() {
             fetch(SCRIPT_URL, {
                 method: 'POST',
@@ -323,15 +312,10 @@
             });
         }
 
-        // ELIMINA UNA US
         function eliminaUS(numero_us) {
             if(!confirm(`Vuoi davvero eliminare l'US ${numero_us}?`)) return;
-            
-            // Nascondila subito dalla schermata
             databaseLocale = databaseLocale.filter(us => String(us.Numero_US) !== String(numero_us));
             render();
-
-            // Mandala a cancellare sul Cloud
             fetch(SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
@@ -345,7 +329,6 @@
             grid.innerHTML = "";
             addButton.style.display = "flex"; 
 
-            // --- NUOVA GESTIONE BRICIOLE DI PANE CLICCABILI ---
             let bcHTML = `<span onclick="event.stopPropagation(); resetNav()" style="cursor:pointer; text-decoration:underline;">Home</span>`;
             if (currentLevel === "CANTIERE" || currentLevel === "QUADRANTE" || currentLevel === "US_LIST") {
                 bcHTML += ` > <span onclick="event.stopPropagation(); selectScavo('${path.scavo}')" style="cursor:pointer; text-decoration:underline;">${path.scavo}</span>`;
@@ -357,23 +340,17 @@
                 bcHTML += ` > <span style="font-weight:bold;">${path.quadrante}</span>`;
             }
             breadcrumb.innerHTML = bcHTML;
-            // --------------------------------------------------
 
             if (currentLevel === "HOME") {
-                if (Object.keys(dataStruttura).length === 0) grid.innerHTML = "<p style='grid-column: 1/-1; text-align: center; color: gray;'>Nessuno scavo. Clicca + per creare.</p>";
+                if (Object.keys(dataStruttura).length === 0) grid.innerHTML = "<p style='grid-column: 1/-1; text-align: center; color: gray;'>Nessuno scavo. Clicca +</p>";
                 Object.keys(dataStruttura).forEach(s => createBox(s, "🏗️", () => selectScavo(s), () => deleteItem(s)));
             } 
             else if (currentLevel === "CANTIERE") {
-                if (Object.keys(dataStruttura[path.scavo] || {}).length === 0) grid.innerHTML = "<p style='grid-column: 1/-1; text-align: center; color: gray;'>Nessun cantiere. Clicca + per creare.</p>";
                 Object.keys(dataStruttura[path.scavo]).forEach(c => createBox(c, "🚧", () => selectCantiere(c), () => deleteItem(c)));
             } 
             else if (currentLevel === "QUADRANTE") {
-                if ((dataStruttura[path.scavo][path.cantiere] || []).length === 0) grid.innerHTML = "<p style='grid-column: 1/-1; text-align: center; color: gray;'>Nessun quadrante. Clicca + per creare.</p>";
                 dataStruttura[path.scavo][path.cantiere].forEach(q => createBox(q, "🟦", () => {
-                    path.quadrante = q; 
-                    currentLevel = "US_LIST"; 
-                    render(); 
-                    caricaDatiDalDatabase(); 
+                    path.quadrante = q; currentLevel = "US_LIST"; render(); caricaDatiDalDatabase(); 
                 }, () => deleteItem(q)));
             }
             else if (currentLevel === "US_LIST") {
@@ -384,23 +361,16 @@
                 );
 
                 if (usFiltrate.length === 0) {
-                    grid.innerHTML = "<p style='grid-column: 1/-1; text-align: center; color: gray;'>Nessuna US trovata. Clicca +</p>";
+                    grid.innerHTML = "<p style='grid-column: 1/-1; text-align: center; color: gray;'>Nessuna US trovata.</p>";
                 } else {
                     usFiltrate.forEach(us => {
                         const div = document.createElement('div');
                         div.className = 'box';
-                        div.style.position = "relative"; 
-                        div.style.aspectRatio = "auto";
-                        div.style.height = "50px"; 
-                        div.style.padding = "5px 15px";
-                        div.style.flexDirection = "row";
-                        div.style.justifyContent = "space-between";
-                        div.style.border = "1px dashed var(--accent-pink)";
-                        div.style.background = "#fff";
+                        div.style.height = "50px"; div.style.padding = "5px 15px"; div.style.flexDirection = "row";
+                        div.style.justifyContent = "space-between"; div.style.border = "1px dashed var(--accent-pink)";
                         
                         const xBtn = document.createElement('div');
-                        xBtn.className = 'delete-btn';
-                        xBtn.innerText = '✕';
+                        xBtn.className = 'delete-btn'; xBtn.innerText = '✕';
                         xBtn.onclick = (e) => { e.stopPropagation(); eliminaUS(us.Numero_US); };
                         
                         const textDiv = document.createElement('div');
@@ -412,9 +382,7 @@
                             </div>
                             <div style="font-size:11px; color:gray;">${us.Tipo_US}</div>
                         `;
-                        
-                        div.appendChild(xBtn);
-                        div.appendChild(textDiv);
+                        div.appendChild(xBtn); div.appendChild(textDiv);
                         div.onclick = () => openForm(us);
                         grid.appendChild(div);
                     });
@@ -422,135 +390,66 @@
             }
         }
 
-        // LA NUOVA FUNZIONE DI RICERCA
         function cercaUS(query) {
             query = query.trim().toLowerCase();
-            
-            // Se svuoti la barra di ricerca, torna dove eri
-            if (!query) {
-                render();
-                return;
-            }
-
-            // Nasconde il tasto + e cambia il titolo
+            if (!query) { render(); return; }
             addButton.style.display = "none";
-            breadcrumb.innerText = "Risultati ricerca per: " + query;
-            grid.innerHTML = ""; // Pulisce lo schermo
-
-            // Cerca in tutto il database
-            const risultati = databaseLocale.filter(us => 
-                String(us.Numero_US).toLowerCase().includes(query)
-            );
-
-            if (risultati.length === 0) {
-                grid.innerHTML = "<p style='grid-column: 1/-1; text-align: center; color: gray;'>Nessuna US trovata.</p>";
-                return;
-            }
-
-            // Disegna i box per i risultati
+            breadcrumb.innerText = "Risultati per: " + query;
+            grid.innerHTML = "";
+            const risultati = databaseLocale.filter(us => String(us.Numero_US).toLowerCase().includes(query));
             risultati.forEach(us => {
                 const div = document.createElement('div');
-                div.className = 'box';
-                div.style.position = "relative"; 
-                div.style.aspectRatio = "auto";
-                div.style.height = "auto"; 
-                div.style.minHeight = "60px";
-                div.style.padding = "10px 15px";
-                div.style.flexDirection = "column"; 
-                div.style.alignItems = "flex-start";
-                div.style.border = "1px dashed var(--accent-pink)";
-                div.style.background = "#fff";
-                
-                // Crea la stringa di contesto (es: Asingeran 2022 | Cantiere E | Q1)
+                div.className = 'box'; div.style.minHeight = "60px"; div.style.alignItems = "flex-start";
                 const contesto = `${us.Scavo || "?"} | ${us.Cantiere || "?"} | ${us.Quadrante || "?"}`;
-
                 div.innerHTML = `
                     <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <span style="font-size:10px; color:var(--accent-pink); font-weight:bold;">US</span>
-                            <span style="font-size:18px; font-weight:bold;">${us.Numero_US}</span>
-                        </div>
-                        <div style="font-size:11px; color:gray;">${us.Tipo_US}</div>
+                        <span style="font-size:18px; font-weight:bold;">US ${us.Numero_US}</span>
+                        <span style="font-size:11px; color:gray;">${us.Tipo_US}</span>
                     </div>
-                    <div style="font-size:11px; color:var(--accent-pink); margin-top:5px;">
-                        📍 ${contesto}
-                    </div>
+                    <div style="font-size:11px; color:var(--accent-pink);">📍 ${contesto}</div>
                 `;
-                
-                div.onclick = () => {
-                    // Imposta temporaneamente il path in modo che il form mostri il contesto giusto
-                    path.scavo = us.Scavo || "";
-                    path.cantiere = us.Cantiere || "";
-                    path.quadrante = us.Quadrante || "";
-                    // Pulisce la barra di ricerca per la prossima volta
-                    document.getElementById('search-input').value = "";
-                    openForm(us);
-                };
+                div.onclick = () => { path.scavo = us.Scavo; path.cantiere = us.Cantiere; path.quadrante = us.Quadrante; openForm(us); };
                 grid.appendChild(div);
             });
         }
+
         function createBox(text, icon, onClick, onDelete) {
             const div = document.createElement('div');
             div.className = 'box';
-            
             const xBtn = document.createElement('div');
-            xBtn.className = 'delete-btn';
-            xBtn.innerText = '✕';
-            xBtn.onclick = (e) => { 
-                e.stopPropagation(); 
-                if(confirm(`Eliminare ${text}?`)) onDelete(); 
-            };
-            
+            xBtn.className = 'delete-btn'; xBtn.innerText = '✕';
+            xBtn.onclick = (e) => { e.stopPropagation(); if(confirm(`Eliminare ${text}?`)) onDelete(); };
             div.innerHTML = `<div class="box-icon">${icon}</div><div>${text}</div>`;
-            div.appendChild(xBtn);
-            div.onclick = onClick;
+            div.appendChild(xBtn); div.onclick = onClick;
             grid.appendChild(div);
         }
 
-        // TASTO PIÙ INTELLIGENTE
         function handleFabClick() {
-            if (currentLevel === "US_LIST") {
-                openForm(); // Apre la scheda della nuova US
-                return;
-            }
-
-            const nuovo = prompt("Inserisci il nome del nuovo elemento:");
-            if (!nuovo || nuovo.trim() === "") return;
+            if (currentLevel === "US_LIST") { openForm(); return; }
+            const nuovo = prompt("Inserisci nome:");
+            if (!nuovo) return;
             const nomePulito = nuovo.trim();
-
-            // Aggiunge Scavi/Cantieri/Quadranti
-            if (currentLevel === "HOME") {
-                if(!dataStruttura[nomePulito]) dataStruttura[nomePulito] = {};
-            } else if (currentLevel === "CANTIERE") {
-                if(!dataStruttura[path.scavo][nomePulito]) dataStruttura[path.scavo][nomePulito] = [];
-            } else if (currentLevel === "QUADRANTE") {
-                if(!dataStruttura[path.scavo][path.cantiere].includes(nomePulito)) dataStruttura[path.scavo][path.cantiere].push(nomePulito);
-            }
-            
-            render();
-            salvaStrutturaInCloud(); // Lo scrive nel foglio Google "Struttura"
+            if (currentLevel === "HOME") dataStruttura[nomePulito] = {};
+            else if (currentLevel === "CANTIERE") dataStruttura[path.scavo][nomePulito] = [];
+            else if (currentLevel === "QUADRANTE") dataStruttura[path.scavo][path.cantiere].push(nomePulito);
+            render(); salvaStrutturaInCloud();
         }
 
         function deleteItem(item) {
-            if (currentLevel === "HOME") {
-                delete dataStruttura[item];
-            } else if (currentLevel === "CANTIERE") {
-                delete dataStruttura[path.scavo][item];
-            } else if (currentLevel === "QUADRANTE") {
-                dataStruttura[path.scavo][path.cantiere] = dataStruttura[path.scavo][path.cantiere].filter(q => q !== item);
-            }
-            render();
-            salvaStrutturaInCloud(); // Cancella l'elemento dal foglio Google "Struttura"
+            if (currentLevel === "HOME") delete dataStruttura[item];
+            else if (currentLevel === "CANTIERE") delete dataStruttura[path.scavo][item];
+            else if (currentLevel === "QUADRANTE") dataStruttura[path.scavo][path.cantiere] = dataStruttura[path.scavo][path.cantiere].filter(q => q !== item);
+            render(); salvaStrutturaInCloud();
         }
 
         function selectScavo(s) { path.scavo = s; currentLevel = "CANTIERE"; render(); }
         function selectCantiere(c) { path.cantiere = c; currentLevel = "QUADRANTE"; render(); }
         function resetNav() { currentLevel = "HOME"; path = {scavo:"", cantiere:"", quadrante:""}; render(); caricaDatiDalDatabase(); }
 
-       function openForm(dati = null) {
+        function openForm(dati = null) {
             document.getElementById('form-context').value = `${path.scavo} | ${path.cantiere} | ${path.quadrante}`;
             const btn = document.querySelector('.btn-save');
-            const preview = document.getElementById('preview_foto'); // Prendiamo il quadro
+            const preview = document.getElementById('preview_foto');
             rapportiDati = [];
             
             if(dati) {
@@ -558,120 +457,57 @@
                 Object.keys(mapping).forEach(tipo => {
                     if (mapping[tipo]) { mapping[tipo].toString().split(',').forEach(num => { if(num.trim()) rapportiDati.push({ id: Math.random(), tipo: tipo, num: num.trim() }); }); }
                 });
+                document.getElementById('num_us').value = dati.Numero_US || "";
+                document.getElementById('tipo_us').value = dati.Tipo_US || "piano";
+                document.getElementById('descrizione').value = dati.Descrizione || "";
+                document.getElementById('interpretazione').value = dati.Interpretazione || "";
                 
-                document.getElementById('num_us').value = dati.Numero_US;
-                document.getElementById('tipo_us').value = dati.Tipo_US;
-                document.getElementById('descrizione').value = dati.Descrizione;
-                document.getElementById('interpretazione').value = dati.Interpretazione;
-                
-                // --- MOSTRA LA FOTO SE ESISTE NEL DATABASE ---
-                // Peschiamo il link dalla colonna giusta!
                 let urlFoto = dati.Link || dati.link || ""; 
-                
                 if (urlFoto.trim() !== "") {
-                    // Trasformiamo il link di Drive in un'immagine visibile
                     if (urlFoto.includes("drive.google.com/file/d/")) {
-                        const fileId = urlFoto.match(/[-\w]{25,}/); // Cerca l'ID della foto
-                        if (fileId) {
-                            urlFoto = `https://drive.google.com/uc?id=${fileId[0]}`;
-                        }
+                        const fileId = urlFoto.match(/[-\w]{25,}/);
+                        if (fileId) urlFoto = `https://drive.google.com/uc?id=${fileId[0]}`;
                     }
-                    
-                    preview.src = urlFoto;
-                    preview.style.display = 'block';
+                    preview.src = urlFoto; preview.style.display = 'block';
                 } else {
-                    preview.src = '';
-                    preview.style.display = 'none';
+                    preview.src = ''; preview.style.display = 'none';
                 }
-                
-                document.getElementById('file_foto').value = ""; // Pulisce il bottone del file
-                    
-                    preview.src = urlFoto;
-                    preview.style.display = 'block';
-                } else {
-                    preview.src = '';
-                    preview.style.display = 'none';
-                }
-                document.getElementById('file_foto').value = ""; // Pulisce il bottone file
-
                 btn.innerText = "AGGIORNA DATI";
             } else {
-                document.getElementById('num_us').value = "";
-                document.getElementById('descrizione').value = "";
-                document.getElementById('interpretazione').value = "";
-                
-                // --- RESETTA L'ANTEPRIMA PER LE NUOVE US ---
-                preview.src = '';
-                preview.style.display = 'none';
-                document.getElementById('file_foto').value = "";
-
+                document.getElementById('num_us').value = ""; document.getElementById('descrizione').value = ""; document.getElementById('interpretazione').value = "";
+                preview.src = ''; preview.style.display = 'none';
                 btn.innerText = "INVIA DATI";
             }
-            renderChips(); 
-            modal.style.display = 'flex';
+            document.getElementById('file_foto').value = "";
+            renderChips(); modal.style.display = 'flex';
         }
 
         function closeModal() { modal.style.display = 'none'; }
-
-        function addRapporto(tipo) {
-            const num = prompt(`Inserisci il numero US che ${tipo.toLowerCase()}:`);
-            if (num) { rapportiDati.push({ id: Date.now(), tipo, num }); renderChips(); }
-        }
-
-        function renderChips() {
-            chipsArea.innerHTML = "";
-            rapportiDati.forEach(r => {
-                const chip = document.createElement('div'); chip.className = 'chip';
-                chip.innerHTML = `${r.tipo}: ${r.num} <span class="close-chip" onclick="removeRapporto(${r.id})">✕</span>`; chipsArea.appendChild(chip);
-            });
-        }
-
+        function addRapporto(tipo) { const num = prompt(`Inserisci numero US:`); if (num) { rapportiDati.push({ id: Date.now(), tipo, num }); renderChips(); } }
+        function renderChips() { chipsArea.innerHTML = ""; rapportiDati.forEach(r => { const chip = document.createElement('div'); chip.className = 'chip'; chip.innerHTML = `${r.tipo}: ${r.num} <span class="close-chip" onclick="removeRapporto(${r.id})">✕</span>`; chipsArea.appendChild(chip); }); }
         function removeRapporto(id) { rapportiDati = rapportiDati.filter(r => r.id !== id); renderChips(); }
 
-        const toBase64 = file => new Promise((resolve, reject) => {
-            const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => resolve(reader.result); reader.onerror = error => reject(error);
-        });
+        const toBase64 = file => new Promise((resolve, reject) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => resolve(reader.result); reader.onerror = error => reject(error); });
 
         async function salvaDati() {
-            const btn = document.querySelector('.btn-save');
-            btn.innerText = "Invio in corso...";
-            btn.disabled = true;
-
+            const btn = document.querySelector('.btn-save'); btn.innerText = "Invio..."; btn.disabled = true;
             let fileData = null;
             const fileInput = document.getElementById('file_foto');
             if (fileInput.files.length > 0) {
                 const file = fileInput.files[0]; const base64 = await toBase64(file);
                 fileData = { base64: base64.split(',')[1], type: file.type };
             }
-
             const payload = {
-                action: "SAVE_US", // Spiega allo script cosa fare
-                scavo: path.scavo, cantiere: path.cantiere, quadrante: path.quadrante,
+                action: "SAVE_US", scavo: path.scavo, cantiere: path.cantiere, quadrante: path.quadrante,
                 numero_us: document.getElementById('num_us').value, tipo_us: document.getElementById('tipo_us').value,
                 operatore: document.getElementById('operatore').value, fotoSpunta: document.getElementById('check_foto').checked,
                 fotoFile: fileData, rapporti: rapportiDati, descrizione: document.getElementById('descrizione').value, interpretazione: document.getElementById('interpretazione').value
             };
-
-            fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify(payload)
-            })
-            .then(() => {
-                alert("US Salvata con successo!");
-                btn.disabled = false;
-                btn.innerText = "INVIA DATI";
-                closeModal();
-                caricaDatiDalDatabase(); // Ricarica tutto
-            })
-            .catch(error => {
-                alert("Errore nell'invio.");
-                btn.disabled = false;
-                btn.innerText = "INVIA DATI";
-            });
+            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
+            .then(() => { alert("US Salvata!"); btn.disabled = false; btn.innerText = "INVIA DATI"; closeModal(); caricaDatiDalDatabase(); })
+            .catch(() => { alert("Errore invio"); btn.disabled = false; });
         }
 
-        // CARICA I DATI APPENA SI APRE L'APP
         caricaDatiDalDatabase();
     </script>
 </body>
