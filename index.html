@@ -462,22 +462,29 @@
                 document.getElementById('descrizione').value = dati.Descrizione || "";
                 document.getElementById('interpretazione').value = dati.Interpretazione || "";
                 
-                let urlFoto = dati.Link || dati.link || ""; 
-                if (urlFoto.trim() !== "") {
-                    if (urlFoto.includes("drive.google.com/file/d/")) {
-                        const fileId = urlFoto.match(/[-\w]{25,}/);
-                        if (fileId) urlFoto = `https://drive.google.com/uc?id=${fileId[0]}`;
+                // --- DEBUG: Vediamo cosa legge l'app ---
+                console.log("Dati ricevuti per la foto:", dati); // Questo serve a noi per spiare
+                
+                // Prova a prendere il link in tutti i modi possibili (maiuscolo o minuscolo)
+                let urlFoto = dati.Link || dati.link || dati.LINK || ""; 
+                
+                if (urlFoto && urlFoto.trim() !== "" && urlFoto !== "SÌ" && urlFoto !== "NO") {
+                    // Trasformiamo il link di Drive in un'immagine visibile
+                    if (urlFoto.includes("drive.google.com")) {
+                        const fileId = urlFoto.match(/[-\w]{25,}/); 
+                        if (fileId) {
+                            urlFoto = `https://drive.google.com/uc?id=${fileId[0]}`;
+                        }
                     }
-                    preview.src = urlFoto; preview.style.display = 'block';
+                    
+                    preview.src = urlFoto;
+                    preview.style.display = 'block';
+                    console.log("URL trasformato caricato:", urlFoto);
                 } else {
-                    preview.src = ''; preview.style.display = 'none';
+                    console.log("Nessun link trovato o dato non valido:", urlFoto);
+                    preview.src = '';
+                    preview.style.display = 'none';
                 }
-                btn.innerText = "AGGIORNA DATI";
-            } else {
-                document.getElementById('num_us').value = ""; document.getElementById('descrizione').value = ""; document.getElementById('interpretazione').value = "";
-                preview.src = ''; preview.style.display = 'none';
-                btn.innerText = "INVIA DATI";
-            }
             document.getElementById('file_foto').value = "";
             renderChips(); modal.style.display = 'flex';
         }
