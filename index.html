@@ -34,7 +34,9 @@
 
         .header-container { width: 100%; max-width: 500px; margin-bottom: 20px; }
         .search-bar { width: 100%; padding: 12px 20px; border-radius: 25px; border: none; background: var(--white); box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-size: 16px; outline: none; box-sizing: border-box; }
-        .breadcrumb { margin-top: 15px; font-size: 18px; color: var(--accent-pink); cursor: pointer; font-weight: bold; }
+        .breadcrumb { margin-top: 15px; font-size: 18px; color: var(--accent-pink); font-weight: bold; }
+        .breadcrumb span { cursor: pointer; text-decoration: underline; margin: 0 2px; }
+        .breadcrumb span:last-child { cursor: default; text-decoration: none; color: var(--dark-text); }
         .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 500px; padding-bottom: 100px; }
 
         .box {
@@ -129,9 +131,26 @@
         <svg class="archaeo-icon" viewBox="0 0 64 64">
             <path d="M15 15 L48 12 L52 45 L40 55 L12 50 L10 28 Z" opacity="0.3" fill="none" stroke-width="2.5"/>
             <path d="M30 13 L33 22 L28 32" opacity="0.2" /> <g opacity="0.7" fill="var(--accent-pink)">
-                <path d="M22 20 l3 5 l-6 0 z" /> <path d="M28 22 l2 4 l-4 0 z" /> <path d="M34 19 l3 5 l-6 0 z" />
-                <path d="M20 30 l3 5 l-6 0 z" /> <path d="M26 31 l4 2 l-2 -4 z" /> <path d="M38 28 l2 5 l-4 0 z" />
-                <path d="M22 40 l4 2 l-2 -4 z" /> <path d="M31 42 l2 4 l-4 0 z" /> <path d="M38 41 l5 2 l-2 -5 z" />
+                <path d="M18 20 l3 3 l-3 -1 z" />
+                <path d="M22 19 l2 4 l-1 -2 z" />
+                <path d="M25 21 l4 2 l-3 -1 z" />
+                <path d="M32 18 l2 5 l-1 -2 z" />
+                <path d="M35 20 l5 1 l-4 -1 z" />
+                <path d="M16 28 l4 2 l-2 -1 z" />
+                <path d="M21 27 l2 4 l-1 -2 z" />
+                <path d="M26 29 l3 3 l-2 -1 z" />
+                <path d="M30 28 l1 4 l-1 -2 z" />
+                <path d="M34 30 l4 1 l-3 -1 z" />
+                <path d="M40 27 l2 4 l-1 -2 z" />
+                <path d="M18 36 l3 2 l-2 -1 z" />
+                <path d="M23 35 l2 5 l-1 -2 z" />
+                <path d="M27 37 l4 1 l-3 -1 z" />
+                <path d="M33 36 l2 3 l-1 -1 z" />
+                <path d="M37 38 l5 2 l-4 -1 z" />
+                <path d="M22 45 l2 4 l-1 -2 z" />
+                <path d="M26 44 l4 2 l-3 -1 z" />
+                <path d="M32 46 l3 3 l-2 -1 z" />
+                <path d="M38 45 l2 4 l-1 -2 z" />
             </g>
 
             <circle class="dust-particle" cx="30" cy="18" r="1.2" />
@@ -149,7 +168,7 @@
 
     <div class="header-container">
         <input type="text" id="search-input" class="search-bar" placeholder="Cerca US..." oninput="cercaUS(this.value)">
-        <div id="breadcrumb" class="breadcrumb" onclick="resetNav()">Home</div>
+        <div id="breadcrumb" class="breadcrumb" onclick="navTo('HOME')">Home</div>
     </div>
 
     <div id="main-grid" class="grid-container"></div>
@@ -266,7 +285,7 @@
             if (file) { preview.src = URL.createObjectURL(file); preview.style.display = 'block'; }
         });
 
-        async function caricaDatiDalDatabase() {
+        async function caricaDatiDalDatabase(isSearchReturn = false) {
             document.getElementById('loader-text').innerText = "SINCRONIZZAZIONE...";
             document.getElementById('loader').style.display = 'flex';
             try {
@@ -274,36 +293,58 @@
                 const data = await response.json();
                 databaseLocale = data.us || [];
                 if (data.strutturaObj) dataStruttura = data.strutturaObj;
-                render(); 
+                
+                // Se ritorniamo da una ricerca salvata, manteniamo il livello US_LIST
+                if (!isSearchReturn) {
+                    render();
+                } else {
+                    currentLevel = "US_LIST";
+                    document.getElementById('search-input').value = ""; // Pulisci la barra di ricerca
+                    render();
+                }
             } catch (e) { showToast("Errore connessione"); }
             finally { document.getElementById('loader').style.display = 'none'; }
         }
 
-        function salvaStrutturaInCloud() {
-            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "SAVE_STRUTTURA", struttura: dataStruttura }) });
-            showToast("Struttura aggiornata");
-        }
-
-        function eliminaUS(numero_us) {
-            if(!confirm(`Vuoi davvero eliminare l'US ${numero_us}?`)) return;
-            databaseLocale = databaseLocale.filter(us => String(us.Numero_US) !== String(numero_us));
+        // --- GESTIONE BRICIOLE DI PANE ---
+        function navTo(level, name = "") {
+            document.getElementById('search-input').value = ""; // Pulisci ricerca se si naviga
+            if (level === 'HOME') {
+                path = { scavo: "", cantiere: "", quadrante: "" };
+                currentLevel = "HOME";
+            } else if (level === 'CANTIERE') {
+                path.scavo = name;
+                path.cantiere = "";
+                path.quadrante = "";
+                currentLevel = "CANTIERE";
+            } else if (level === 'QUADRANTE') {
+                path.cantiere = name;
+                path.quadrante = "";
+                currentLevel = "QUADRANTE";
+            }
             render();
-            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "DELETE_US", scavo: path.scavo, cantiere: path.cantiere, quadrante: path.quadrante, numero_us: numero_us }) })
-            .then(() => { showToast("US eliminata"); caricaDatiDalDatabase(); });
         }
 
         function render() {
             grid.innerHTML = ""; addButton.style.display = "flex"; 
-            let bcHTML = `<span onclick="resetNav()" style="text-decoration:underline;">Home</span>`;
-            if (path.scavo) bcHTML += ` > <span onclick="selectScavo('${path.scavo}')" style="text-decoration:underline;">${path.scavo}</span>`;
-            if (path.cantiere) bcHTML += ` > <span onclick="selectCantiere('${path.cantiere}')" style="text-decoration:underline;">${path.cantiere}</span>`;
-            if (path.quadrante && currentLevel === "US_LIST") bcHTML += ` > <b>${path.quadrante}</b>`;
+            
+            // Costruzione Breadcrumb
+            let bcHTML = `<span onclick="navTo('HOME')">Home</span>`;
+            if (path.scavo) {
+                bcHTML += ` > <span onclick="navTo('CANTIERE', '${path.scavo}')">${path.scavo}</span>`;
+            }
+            if (path.cantiere) {
+                bcHTML += ` > <span onclick="navTo('QUADRANTE', '${path.cantiere}')">${path.cantiere}</span>`;
+            }
+            if (path.quadrante && currentLevel === "US_LIST") {
+                bcHTML += ` > <span>${path.quadrante}</span>`; // Non cliccabile, sei già qui
+            }
             breadcrumb.innerHTML = bcHTML;
 
             if (currentLevel === "HOME") {
-                Object.keys(dataStruttura).forEach(s => createBox(s, "🏗️", () => selectScavo(s), () => deleteItem(s)));
+                Object.keys(dataStruttura).forEach(s => createBox(s, "🏗️", () => navTo('CANTIERE', s), () => deleteItem(s)));
             } else if (currentLevel === "CANTIERE") {
-                Object.keys(dataStruttura[path.scavo] || {}).forEach(c => createBox(c, "🚧", () => selectCantiere(c), () => deleteItem(c)));
+                Object.keys(dataStruttura[path.scavo] || {}).forEach(c => createBox(c, "🚧", () => navTo('QUADRANTE', c), () => deleteItem(c)));
             } else if (currentLevel === "QUADRANTE") {
                 (dataStruttura[path.scavo][path.cantiere] || []).forEach(q => createBox(q, "🟦", () => { path.quadrante = q; currentLevel = "US_LIST"; render(); }, () => deleteItem(q)));
             } else if (currentLevel === "US_LIST") {
@@ -319,17 +360,24 @@
 
         function createBox(text, icon, onClick, onDelete) {
             const div = document.createElement('div'); div.className = 'box';
-            div.innerHTML = `<div class='delete-btn' onclick='event.stopPropagation(); if(confirm("Eliminare ${text}?")) onDelete("${text}")'>✕</div><div class='box-icon'>${icon}</div>${text}`;
+            div.innerHTML = `<div class='delete-btn' onclick='event.stopPropagation(); onDelete()'>✕</div><div class='box-icon'>${icon}</div>${text}`;
             div.onclick = onClick; grid.appendChild(div);
         }
 
         function cercaUS(q) {
             q = q.trim().toLowerCase(); if(!q) { render(); return; }
-            addButton.style.display = "none"; breadcrumb.innerText = "Risultati: " + q; grid.innerHTML = "";
+            addButton.style.display = "none"; breadcrumb.innerHTML = `<span>Risultati ricerca per: "${q}"</span>`; grid.innerHTML = "";
             databaseLocale.filter(u => String(u.Numero_US).includes(q)).forEach(us => {
                 const div = document.createElement('div'); div.className = 'box'; div.style.minHeight="60px"; div.style.alignItems="flex-start";
                 div.innerHTML = `<div style='width:100%;display:flex;justify-content:space-between'><b>US ${us.Numero_US}</b><small>${us.Tipo_US}</small></div><div style='font-size:10px;color:var(--accent-pink)'>📍 ${us.Scavo} | ${us.Cantiere} | ${us.Quadrante}</div>`;
-                div.onclick = () => { path.scavo=us.Scavo; path.cantiere=us.Cantiere; path.quadrante=us.Quadrante; openForm(us); }; grid.appendChild(div);
+                div.onclick = () => { 
+                    // Imposta il path per quando salverai l'US
+                    path.scavo = us.Scavo; 
+                    path.cantiere = us.Cantiere; 
+                    path.quadrante = us.Quadrante; 
+                    openForm(us, true); // true indica che veniamo da una ricerca
+                }; 
+                grid.appendChild(div);
             });
         }
 
@@ -339,21 +387,38 @@
             if (currentLevel === "HOME") dataStruttura[nuovo] = {};
             else if (currentLevel === "CANTIERE") dataStruttura[path.scavo][nuovo] = [];
             else if (currentLevel === "QUADRANTE") dataStruttura[path.scavo][path.cantiere].push(nuovo);
-            render(); salvaStrutturaInCloud();
+            
+            render(); 
+            // Aggiorna Google Sheets in background
+            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "SAVE_STRUTTURA", struttura: dataStruttura }) });
+            showToast("Aggiunto!");
         }
 
+        // --- CANCELLAZIONE BOX CORRETTA ---
         function deleteItem(i) {
+            if(!confirm(`Vuoi davvero eliminare ${i}?`)) return;
             if(currentLevel === "HOME") delete dataStruttura[i];
             else if(currentLevel === "CANTIERE") delete dataStruttura[path.scavo][i];
             else if(currentLevel === "QUADRANTE") dataStruttura[path.scavo][path.cantiere] = dataStruttura[path.scavo][path.cantiere].filter(q => q !== i);
-            render(); salvaStrutturaInCloud();
+            
+            render(); 
+            // Aggiorna Google Sheets in background
+            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "SAVE_STRUTTURA", struttura: dataStruttura }) });
+            showToast("Eliminato!");
         }
 
-        function selectScavo(s) { path.scavo = s; path.cantiere=""; path.quadrante=""; currentLevel = "CANTIERE"; render(); }
-        function selectCantiere(c) { path.cantiere = c; path.quadrante=""; currentLevel = "QUADRANTE"; render(); }
-        function resetNav() { path = {scavo:"", cantiere:"", quadrante:""}; currentLevel = "HOME"; render(); caricaDatiDalDatabase(); }
+        function eliminaUS(numero_us) {
+            if(!confirm(`Vuoi davvero eliminare l'US ${numero_us}?`)) return;
+            databaseLocale = databaseLocale.filter(us => String(us.Numero_US) !== String(numero_us));
+            render();
+            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "DELETE_US", scavo: path.scavo, cantiere: path.cantiere, quadrante: path.quadrante, numero_us: numero_us }) })
+            .then(() => { showToast("US eliminata"); caricaDatiDalDatabase(); });
+        }
 
-        function openForm(d = null) {
+        let isFromSearch = false;
+
+        function openForm(d = null, fromSearch = false) {
+            isFromSearch = fromSearch;
             document.getElementById('form-context').value = `${path.scavo} | ${path.cantiere} | ${path.quadrante}`;
             const preview = document.getElementById('preview_foto');
             const saveBtnText = document.getElementById('save-btn-text');
@@ -405,7 +470,12 @@
                 descrizione: document.getElementById('descrizione').value, interpretazione: document.getElementById('interpretazione').value
             };
             fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(p) })
-            .then(() => { showToast("US Salvata!"); btn.disabled = false; closeModal(); caricaDatiDalDatabase(); })
+            .then(() => { 
+                showToast("US Salvata!"); 
+                btn.disabled = false; 
+                closeModal(); 
+                caricaDatiDalDatabase(isFromSearch); // Se è true, caricaDatiDalDatabase ti riporterà al quadrante!
+            })
             .catch(() => { showToast("Errore!"); btn.disabled = false; document.getElementById('loader').style.display = 'none'; });
         }
 
