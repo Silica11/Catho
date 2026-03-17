@@ -300,20 +300,62 @@
             });
         }
 
+        // TASTO PIÙ: CREAZIONE IMMEDIATA
         function handleFabClick() {
             if (currentLevel === "US_LIST") { openForm(); return; }
-            const n = prompt("Inserisci nome:"); if(!n) return;
-            if(currentLevel === "HOME") dataStruttura[n] = {};
-            else if(currentLevel === "CANTIERE") dataStruttura[path.scavo][n] = [];
-            else if(currentLevel === "QUADRANTE") dataStruttura[path.scavo][path.cantiere].push(n);
-            render(); salvaStrutturaInCloud();
+            
+            const nuovo = prompt("Inserisci il nome del nuovo elemento:");
+            if (!nuovo || nuovo.trim() === "") return;
+            const nomePulito = nuovo.trim();
+
+            // 1. AGGIORNA SUBITO I DATI LOCALI (Così non scompaiono!)
+            if (currentLevel === "HOME") {
+                if(!dataStruttura[nomePulito]) dataStruttura[nomePulito] = {};
+            } else if (currentLevel === "CANTIERE") {
+                if(!dataStruttura[path.scavo][nomePulito]) dataStruttura[path.scavo][nomePulito] = [];
+            } else if (currentLevel === "QUADRANTE") {
+                if(!dataStruttura[path.scavo][path.cantiere].includes(nomePulito)) {
+                    dataStruttura[path.scavo][path.cantiere].push(nomePulito);
+                }
+            }
+            
+            // 2. MOSTRA SUBITO IL RISULTATO
+            render(); 
+            
+            // 3. SALVA IN BACKGROUND (Senza bloccare l'utente)
+            fetch(SCRIPT_URL, { 
+                method: 'POST', 
+                mode: 'no-cors', 
+                body: JSON.stringify({ action: "SAVE_STRUTTURA", struttura: dataStruttura }) 
+            });
+            
+            showToast("Creato: " + nomePulito);
         }
 
-        function deleteItem(i) {
-            if(currentLevel === "HOME") delete dataStruttura[i];
-            else if(currentLevel === "CANTIERE") delete dataStruttura[path.scavo][i];
-            else if(currentLevel === "QUADRANTE") dataStruttura[path.scavo][path.cantiere] = dataStruttura[path.scavo][path.cantiere].filter(q => q !== i);
-            render(); salvaStrutturaInCloud();
+        // ELIMINAZIONE IMMEDIATA
+        function deleteItem(item) {
+            if (!confirm(`Vuoi eliminare definitivamente ${item}?`)) return;
+
+            // 1. RIMUOVI SUBITO DALLA VISIONE LOCALE
+            if (currentLevel === "HOME") {
+                delete dataStruttura[item];
+            } else if (currentLevel === "CANTIERE") {
+                delete dataStruttura[path.scavo][item];
+            } else if (currentLevel === "QUADRANTE") {
+                dataStruttura[path.scavo][path.cantiere] = dataStruttura[path.scavo][path.cantiere].filter(q => q !== item);
+            }
+            
+            // 2. AGGIORNA SUBITO LA GRIGLIA
+            render(); 
+            
+            // 3. SALVA LA CANCELLAZIONE IN CLOUD
+            fetch(SCRIPT_URL, { 
+                method: 'POST', 
+                mode: 'no-cors', 
+                body: JSON.stringify({ action: "SAVE_STRUTTURA", struttura: dataStruttura }) 
+            });
+            
+            showToast("Eliminato con successo");
         }
 
         function selectScavo(s) { path.scavo = s; path.cantiere=""; path.quadrante=""; currentLevel = "CANTIERE"; render(); }
