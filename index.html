@@ -32,6 +32,27 @@
             overflow-y: auto;
         }
 
+        /* PULSANTE INDIETRO */
+        .back-container {
+            width: 100%; max-width: 500px;
+            display: flex; align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .back-btn {
+            display: none; /* Nascosto in Home */
+            align-items: center; justify-content: center;
+            background: var(--white); color: var(--accent-pink);
+            border: 2px solid var(--primary-pink); border-radius: 50%;
+            width: 35px; height: 35px; cursor: pointer;
+            font-size: 20px; margin-right: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        /* Rendiamo le briciole semplici testi */
+        .breadcrumb { margin-top: 0; font-size: 14px; color: var(--dark-text); font-weight: 500; opacity: 0.7; }
+        .breadcrumb b { color: var(--accent-pink); opacity: 1; }
+
         .header-container { width: 100%; max-width: 500px; margin-bottom: 20px; }
         .search-bar { width: 100%; padding: 12px 20px; border-radius: 25px; border: none; background: var(--white); box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-size: 16px; outline: none; box-sizing: border-box; }
         .breadcrumb { margin-top: 15px; font-size: 18px; color: var(--accent-pink); font-weight: bold; }
@@ -161,7 +182,10 @@
 
     <div class="header-container">
         <input type="text" id="search-input" class="search-bar" placeholder="Cerca US..." oninput="cercaUS(this.value)">
-        <div id="breadcrumb" class="breadcrumb" onclick="navTo('HOME')">Home</div>
+        <div class="back-container" style="margin-top: 15px;">
+            <div id="back-arrow" class="back-btn" onclick="goBack()">←</div>
+            <div id="breadcrumb" class="breadcrumb">Home</div>
+        </div>
     </div>
 
     <div id="main-grid" class="grid-container"></div>
@@ -342,24 +366,35 @@
             render();
         }
 
+        // FUNZIONE PER TORNARE INDIETRO DI UN LIVELLO
+        function goBack() {
+            if (currentLevel === "CANTIERE") {
+                navTo('HOME');
+            } else if (currentLevel === "QUADRANTE") {
+                navTo('CANTIERE', path.scavo);
+            } else if (currentLevel === "US_LIST") {
+                navTo('QUADRANTE', path.cantiere);
+            }
+        }
+
         function render() {
             grid.innerHTML = ""; 
             addButton.style.display = "flex"; 
+            const backArrow = document.getElementById('back-arrow');
             
-            // Costruzione Breadcrumb con virgolette singole sicure
-            let bcHTML = `<span onclick="navTo('HOME')">Home</span>`;
-            if (path.scavo) {
-                bcHTML += ` > <span onclick="navTo('CANTIERE', '${path.scavo.replace(/'/g, "\\'")}')">${path.scavo}</span>`;
+            // Gestione visibilità freccia e testo Breadcrumb
+            let bcText = "Home";
+            if (currentLevel === "HOME") {
+                backArrow.style.display = "none";
+            } else {
+                backArrow.style.display = "flex";
+                if (path.scavo) bcText = path.scavo;
+                if (path.cantiere) bcText += ` > ${path.cantiere}`;
+                if (path.quadrante && currentLevel === "US_LIST") bcText += ` > <b>${path.quadrante}</b>`;
             }
-            if (path.cantiere) {
-                bcHTML += ` > <span onclick="navTo('QUADRANTE', '${path.cantiere.replace(/'/g, "\\'")}')">${path.cantiere}</span>`;
-            }
-            if (path.quadrante && currentLevel === "US_LIST") {
-                bcHTML += ` > <span style="color:var(--dark-text); text-decoration:none;">${path.quadrante}</span>`;
-            }
-            breadcrumb.innerHTML = bcHTML;
+            breadcrumb.innerHTML = bcText;
 
-            // Logica dei livelli
+            // Visualizzazione Griglia
             if (currentLevel === "HOME") {
                 Object.keys(dataStruttura).forEach(s => createBox(s, "🏗️", () => navTo('CANTIERE', s)));
             } else if (currentLevel === "CANTIERE") {
@@ -390,16 +425,32 @@
 
         function cercaUS(q) {
             q = q.trim().toLowerCase(); if(!q) { render(); return; }
-            addButton.style.display = "none"; breadcrumb.innerHTML = `<span>Risultati ricerca per: "${q}"</span>`; grid.innerHTML = "";
+            addButton.style.display = "none"; 
+            breadcrumb.innerHTML = `<span>Risultati ricerca per: "${q}"</span>`; 
+            grid.innerHTML = "";
+            
             databaseLocale.filter(u => String(u.Numero_US).includes(q)).forEach(us => {
-                const div = document.createElement('div'); div.className = 'box'; div.style.minHeight="60px"; div.style.alignItems="flex-start";
-                div.innerHTML = `<div style='width:100%;display:flex;justify-content:space-between'><b>US ${us.Numero_US}</b><small>${us.Tipo_US}</small></div><div style='font-size:10px;color:var(--accent-pink)'>📍 ${us.Scavo} | ${us.Cantiere} | ${us.Quadrante}</div>`;
+                const div = document.createElement('div'); 
+                div.className = 'box'; 
+                div.style.minHeight="60px"; 
+                div.style.alignItems="flex-start";
+                
+                // AGGIUNTO: Tasto elimina (X) anche qui!
+                div.innerHTML = `
+                    <div class='delete-btn' onclick='event.stopPropagation(); eliminaUS("${us.Numero_US}")'>✕</div>
+                    <div style='width:100%; display:flex; justify-content:space-between; padding-left:10px;'>
+                        <b>US ${us.Numero_US}</b>
+                        <small>${us.Tipo_US}</small>
+                    </div>
+                    <div style='font-size:10px; color:var(--accent-pink); padding-left:10px;'>
+                        📍 ${us.Scavo} | ${us.Cantiere} | ${us.Quadrante}
+                    </div>`;
+                
                 div.onclick = () => { 
-                    // Imposta il path per quando salverai l'US
                     path.scavo = us.Scavo; 
                     path.cantiere = us.Cantiere; 
                     path.quadrante = us.Quadrante; 
-                    openForm(us, true); // true indica che veniamo da una ricerca
+                    openForm(us, true); 
                 }; 
                 grid.appendChild(div);
             });
