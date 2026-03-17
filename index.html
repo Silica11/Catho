@@ -61,15 +61,19 @@
         }
 
         .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4);
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);
             display: none; justify-content: center; align-items: flex-end; z-index: 1000;
+            backdrop-filter: blur(2px); /* Un tocco chic per sfocare lo sfondo */
         }
 
         .modal-content {
-            background: var(--white); width: 100%; max-width: 500px; max-height: 92%;
-            border-radius: 30px 30px 0 0; padding: 15px 25px 40px 25px; overflow-y: auto;
-            box-sizing: border-box; transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            background: var(--white); width: 100%; max-width: 500px; 
+            height: 92vh; /* Forza l'altezza quasi a tutto schermo */
+            border-radius: 30px 30px 0 0; padding: 15px 25px 40px 25px; 
+            overflow-y: auto; box-sizing: border-box; 
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative; touch-action: pan-y;
+            will-change: transform;
         }
 
         .drag-handle { width: 40px; height: 5px; background: #ddd; border-radius: 3px; margin: 0 auto 15px auto; }
@@ -252,18 +256,41 @@
         }
 
         let touchStartY = 0;
-        modalContent.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; }, {passive: true});
+        let isDragging = false;
+
+        modalContent.addEventListener('touchstart', e => {
+            touchStartY = e.touches[0].clientY;
+            isDragging = false;
+        }, {passive: true});
+
         modalContent.addEventListener('touchmove', e => {
             const touchY = e.touches[0].clientY;
             const diff = touchY - touchStartY;
+
+            // Attiviamo il trascinamento solo se siamo in cima e scorriamo verso il basso
             if (diff > 0 && modalContent.scrollTop <= 0) {
-                e.preventDefault(); modalContent.style.transform = `translateY(${diff}px)`;
+                isDragging = true;
+                e.preventDefault();
+                // AGGIUNGIAMO RESISTENZA: moltiplichiamo diff * 0.4 
+                // Il form si muoverà molto più lentamente del dito
+                modalContent.style.transform = `translateY(${diff * 0.4}px)`;
+                modalContent.style.transition = 'none'; // Togliamo la transizione mentre trasciniamo
             }
         }, {passive: false});
+
         modalContent.addEventListener('touchend', e => {
+            if (!isDragging) return;
+            
             const diff = e.changedTouches[0].clientY - touchStartY;
-            if (diff > 150) closeModal();
-            else modalContent.style.transform = `translateY(0)`;
+            modalContent.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+            
+            // SOGLIA PIÙ ALTA: deve scorrere almeno di 200px per chiudersi davvero
+            if (diff > 200) {
+                closeModal();
+            } else {
+                modalContent.style.transform = `translateY(0)`;
+            }
+            isDragging = false;
         });
 
         function handleOverlayClick(e) { if(e.target === modal) closeModal(); }
