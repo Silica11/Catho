@@ -565,17 +565,26 @@
                 document.getElementById('interpretazione').value = dati.Interpretazione;
                 
                 // --- MOSTRA LA FOTO SE ESISTE NEL DATABASE ---
-                // Prende il link (cerca la colonna "Foto" o "foto")
-                let urlFoto = dati.Foto || dati.foto || ""; 
+                // Peschiamo il link dalla colonna giusta!
+                let urlFoto = dati.Link || dati.link || ""; 
                 
                 if (urlFoto.trim() !== "") {
-                    // Magia: trasforma il link "pagina web" di Drive in un link "immagine pura"
+                    // Trasformiamo il link di Drive in un'immagine visibile
                     if (urlFoto.includes("drive.google.com/file/d/")) {
-                        const fileId = urlFoto.match(/[-\w]{25,}/); // Trova il codice segreto della foto
+                        const fileId = urlFoto.match(/[-\w]{25,}/); // Cerca l'ID della foto
                         if (fileId) {
                             urlFoto = `https://drive.google.com/uc?id=${fileId[0]}`;
                         }
                     }
+                    
+                    preview.src = urlFoto;
+                    preview.style.display = 'block';
+                } else {
+                    preview.src = '';
+                    preview.style.display = 'none';
+                }
+                
+                document.getElementById('file_foto').value = ""; // Pulisce il bottone del file
                     
                     preview.src = urlFoto;
                     preview.style.display = 'block';
