@@ -13,7 +13,7 @@
             --bg-color: #fff5f8;
         }
 
-        /* Impedisce il ricaricamento trascinando verso il basso */
+        /* Impedisce il pull-to-refresh */
         html, body { 
             overscroll-behavior-y: contain; 
             overflow: hidden;
@@ -58,7 +58,6 @@
             font-size: 30px; box-shadow: 0 4px 15px rgba(240, 98, 146, 0.4); cursor: pointer; z-index: 999;
         }
 
-        /* MODAL E GESTI */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4);
             display: none; justify-content: center; align-items: flex-end; z-index: 1000;
@@ -71,53 +70,42 @@
             position: relative; touch-action: pan-y;
         }
 
-        .drag-handle {
-            width: 40px; height: 5px; background: #ddd; border-radius: 3px; margin: 0 auto 15px auto;
-        }
-
+        .drag-handle { width: 40px; height: 5px; background: #ddd; border-radius: 3px; margin: 0 auto 15px auto; }
         .form-group { margin-bottom: 15px; }
         label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 5px; color: var(--accent-pink); }
         input, select, textarea { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--primary-pink); font-size: 16px; box-sizing: border-box; }
         input[readonly] { background-color: #f2f2f2; color: #888; }
-
         .btn-save { width: 100%; padding: 15px; background: var(--accent-pink); color: white; border: none; border-radius: 15px; font-size: 18px; font-weight: bold; margin-top: 10px; cursor: pointer; }
 
-        /* --- LOADER MULTIPLO ARCHEOLOGICO --- */
+        /* --- LOADER ARCHEOLOGICO --- */
         .loader-container {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: var(--bg-color);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-color); display: none; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 9999;
         }
 
         .archaeo-icon {
-            width: 100px; height: 100px;
-            fill: none; stroke: var(--accent-pink);
-            stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
-            display: none; /* Nascondiamo tutto di base */
+            width: 120px; height: 120px; fill: none; stroke: var(--accent-pink);
+            stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+            display: none; transform-box: fill-box;
         }
+
+        .show-icon { display: block !important; }
 
         /* Animazione CAZZUOLA */
         .trowel-anim { animation: digging 1.5s ease-in-out infinite; transform-origin: center; }
         @keyframes digging {
-            0%, 100% { transform: rotate(-10deg) translate(0); }
-            50% { transform: rotate(15deg) translate(10px, 5px); }
+            0%, 100% { transform: rotate(-15deg) translate(0, 0); }
+            50% { transform: rotate(20deg) translate(15px, 5px); }
         }
 
-        /* Animazione TAVOLETTA + PENNELLO */
-        .brush-anim { animation: dusting 1.2s ease-in-out infinite; transform-origin: top center; }
+        /* Animazione PENNELLO */
+        .brush-anim { animation: dusting 1s ease-in-out infinite; transform-origin: top center; }
         @keyframes dusting {
-            0%, 100% { transform: rotate(-20deg) translateX(-5px); }
-            50% { transform: rotate(20deg) translateX(5px); }
+            0%, 100% { transform: rotate(-25deg); }
+            50% { transform: rotate(25deg); }
         }
 
-        /* Classi per mostrare l'uno o l'altro */
-        .show-icon { display: block; }
-        
         /* NOTIFICHE TOAST */
         #toast {
             position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
@@ -132,7 +120,7 @@
 
     <div id="loader" class="loader-container">
         <svg id="icon-sync" class="archaeo-icon" viewBox="0 0 64 64">
-            <path d="M10 50 Q 32 40 54 50" opacity="0.3" />
+            <path d="M10 50 Q 32 40 54 50" opacity="0.3" stroke-dasharray="4 4" />
             <g class="trowel-anim">
                 <path d="M32 20 L48 36 L32 52 L16 36 Z" />
                 <path d="M32 20 L32 10 Q 32 6 28 6 L24 6" />
@@ -140,13 +128,14 @@
         </svg>
 
         <svg id="icon-save" class="archaeo-icon" viewBox="0 0 64 64">
-            <rect x="15" y="15" width="34" height="40" rx="4" /> <path d="M22 25 H42 M22 35 H42 M22 45 H35" opacity="0.5" /> <g class="brush-anim">
-                <path d="M45 10 L45 25 M40 25 L50 25 L52 35 L38 35 Z" /> </g>
+            <rect x="18" y="12" width="28" height="40" rx="3" opacity="0.4" />
+            <path d="M24 20 H40 M24 28 H40 M24 36 H35" opacity="0.6" />
+            <g class="brush-anim">
+                <path d="M40 10 L40 25 M36 25 L44 25 L46 35 L34 35 Z" />
+            </g>
         </svg>
 
-        <div id="loader-text" style="margin-top: 15px; color: var(--accent-pink); font-weight: bold; font-size: 16px;">
-            CARICAMENTO...
-        </div>
+        <div id="loader-text" style="margin-top: 15px; color: var(--accent-pink); font-weight: bold; font-size: 16px; letter-spacing: 1px;">CARICAMENTO...</div>
     </div>
 
     <div id="toast">Messaggio</div>
@@ -196,20 +185,20 @@
             <div class="form-group">
                 <label>Foto</label>
                 <input type="file" id="file_foto" accept="image/*" style="margin-top: 5px;">
-                <img id="preview_foto" src="" style="width: 100%; margin-top: 10px; border-radius: 12px; display: none; border: 1px solid var(--primary-pink);">
+                <img id="preview_foto" src="" style="width: 100%; margin-top: 10px; border-radius: 12px; display: none; border: 1px solid var(--primary-pink); object-fit: contain;">
             </div>
 
             <label>Rapporti Stratigrafici</label>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px;">
                 <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('Copre')">Copre</button>
-                <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('È coperto da')">Coperto_da</button>
+                <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('È coperto da')">Coperto da</button>
                 <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('Taglia')">Taglia</button>
-                <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('È tagliato da')">Tagliato_da</button>
+                <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('È tagliato da')">Tagliato da</button>
                 <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('Riempie')">Riempie</button>
-                <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('È riempito da')">Riempito_da</button>
+                <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('È riempito da')">Riempito da</button>
             </div>
-            
             <div id="chips-area" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:10px;"></div>
+
             <div class="form-group" style="margin-top:15px;">
                 <label>Descrizione</label>
                 <textarea id="descrizione" rows="3"></textarea>
@@ -241,7 +230,6 @@
         const modalContent = document.getElementById('modal-content');
         const chipsArea = document.getElementById('chips-area');
 
-        // NOTIFICA PERSONALIZZATA
         function showToast(msg) {
             const t = document.getElementById('toast');
             t.innerText = msg;
@@ -249,7 +237,6 @@
             setTimeout(() => t.classList.remove('show'), 3000);
         }
 
-        // GESTIONE SWIPE DOWN PER CHIUDERE IL FORM
         let touchStartY = 0;
         modalContent.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; }, {passive: true});
         modalContent.addEventListener('touchmove', e => {
@@ -275,11 +262,11 @@
         });
 
         async function caricaDatiDalDatabase() {
-            // Mostra Cazzuola e testo Sync
             document.getElementById('icon-sync').classList.add('show-icon');
             document.getElementById('icon-save').classList.remove('show-icon');
             document.getElementById('loader-text').innerText = "SINCRONIZZAZIONE...";
             document.getElementById('loader').style.display = 'flex';
+            
             try {
                 const response = await fetch(SCRIPT_URL);
                 const data = await response.json();
@@ -293,14 +280,6 @@
         function salvaStrutturaInCloud() {
             fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "SAVE_STRUTTURA", struttura: dataStruttura }) });
             showToast("Struttura aggiornata");
-        }
-
-        function eliminaUS(numero_us) {
-            if(!confirm(`Vuoi davvero eliminare l'US ${numero_us}?`)) return;
-            databaseLocale = databaseLocale.filter(us => String(us.Numero_US) !== String(numero_us));
-            render();
-            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "DELETE_US", scavo: path.scavo, cantiere: path.cantiere, quadrante: path.quadrante, numero_us: numero_us }) })
-            .then(() => { showToast("US eliminata"); caricaDatiDalDatabase(); });
         }
 
         function render() {
@@ -349,62 +328,21 @@
             });
         }
 
-        // TASTO PIÙ: CREAZIONE IMMEDIATA
         function handleFabClick() {
             if (currentLevel === "US_LIST") { openForm(); return; }
-            
-            const nuovo = prompt("Inserisci il nome del nuovo elemento:");
-            if (!nuovo || nuovo.trim() === "") return;
-            const nomePulito = nuovo.trim();
-
-            // 1. AGGIORNA SUBITO I DATI LOCALI (Così non scompaiono!)
-            if (currentLevel === "HOME") {
-                if(!dataStruttura[nomePulito]) dataStruttura[nomePulito] = {};
-            } else if (currentLevel === "CANTIERE") {
-                if(!dataStruttura[path.scavo][nomePulito]) dataStruttura[path.scavo][nomePulito] = [];
-            } else if (currentLevel === "QUADRANTE") {
-                if(!dataStruttura[path.scavo][path.cantiere].includes(nomePulito)) {
-                    dataStruttura[path.scavo][path.cantiere].push(nomePulito);
-                }
-            }
-            
-            // 2. MOSTRA SUBITO IL RISULTATO
-            render(); 
-            
-            // 3. SALVA IN BACKGROUND (Senza bloccare l'utente)
-            fetch(SCRIPT_URL, { 
-                method: 'POST', 
-                mode: 'no-cors', 
-                body: JSON.stringify({ action: "SAVE_STRUTTURA", struttura: dataStruttura }) 
-            });
-            
-            showToast("Creato: " + nomePulito);
+            const nuovo = prompt("Inserisci nome:");
+            if (!nuovo) return;
+            if (currentLevel === "HOME") dataStruttura[nuovo] = {};
+            else if (currentLevel === "CANTIERE") dataStruttura[path.scavo][nuovo] = [];
+            else if (currentLevel === "QUADRANTE") dataStruttura[path.scavo][path.cantiere].push(nuovo);
+            render(); salvaStrutturaInCloud();
         }
 
-        // ELIMINAZIONE IMMEDIATA
-        function deleteItem(item) {
-            if (!confirm(`Vuoi eliminare definitivamente ${item}?`)) return;
-
-            // 1. RIMUOVI SUBITO DALLA VISIONE LOCALE
-            if (currentLevel === "HOME") {
-                delete dataStruttura[item];
-            } else if (currentLevel === "CANTIERE") {
-                delete dataStruttura[path.scavo][item];
-            } else if (currentLevel === "QUADRANTE") {
-                dataStruttura[path.scavo][path.cantiere] = dataStruttura[path.scavo][path.cantiere].filter(q => q !== item);
-            }
-            
-            // 2. AGGIORNA SUBITO LA GRIGLIA
-            render(); 
-            
-            // 3. SALVA LA CANCELLAZIONE IN CLOUD
-            fetch(SCRIPT_URL, { 
-                method: 'POST', 
-                mode: 'no-cors', 
-                body: JSON.stringify({ action: "SAVE_STRUTTURA", struttura: dataStruttura }) 
-            });
-            
-            showToast("Eliminato con successo");
+        function deleteItem(i) {
+            if(currentLevel === "HOME") delete dataStruttura[i];
+            else if(currentLevel === "CANTIERE") delete dataStruttura[path.scavo][i];
+            else if(currentLevel === "QUADRANTE") dataStruttura[path.scavo][path.cantiere] = dataStruttura[path.scavo][path.cantiere].filter(q => q !== i);
+            render(); salvaStrutturaInCloud();
         }
 
         function selectScavo(s) { path.scavo = s; path.cantiere=""; path.quadrante=""; currentLevel = "CANTIERE"; render(); }
@@ -414,71 +352,34 @@
         function openForm(d = null) {
             document.getElementById('form-context').value = `${path.scavo} | ${path.cantiere} | ${path.quadrante}`;
             const preview = document.getElementById('preview_foto');
-            const saveBtn = document.getElementById('save-btn-text');
+            const saveBtnText = document.getElementById('save-btn-text');
             rapportiDati = [];
             
             if(d) {
-                // 1. CARICAMENTO DATI ESISTENTI
-                const map = { 
-                    "Copre": d.Copre, 
-                    "È coperto da": d.Coperto_da, 
-                    "Taglia": d.Taglia, 
-                    "È tagliato da": d.Tagliato_da, 
-                    "Riempie": d.Riempie, 
-                    "È riempito da": d.Riempito_da 
-                };
-                Object.keys(map).forEach(t => { 
-                    if(map[t]) map[t].toString().split(',').forEach(n => { 
-                        if(n.trim()) rapportiDati.push({id: Math.random(), tipo: t, num: n.trim()}); 
-                    })
-                });
-                
+                const map = { "Copre": d.Copre, "È coperto da": d.Coperto_da, "Taglia": d.Taglia, "È tagliato da": d.Tagliato_da, "Riempie": d.Riempie, "È riempito da": d.Riempito_da };
+                Object.keys(map).forEach(t => { if(map[t]) map[t].toString().split(',').forEach(n => { if(n.trim()) rapportiDati.push({id: Math.random(), tipo: t, num: n.trim()}); })});
                 document.getElementById('num_us').value = d.Numero_US || "";
                 document.getElementById('tipo_us').value = (d.Tipo_US || "piano").toLowerCase();
                 document.getElementById('descrizione').value = d.Descrizione || "";
                 document.getElementById('interpretazione').value = d.Interpretazione || "";
                 
-                // 2. GESTIONE FOTO (IL FIX)
                 let url = d.Link || d.link || d.LINK || d.URL || "";
                 if(url && url.length > 10) {
                     if(url.includes("drive.google.com")) {
                         const idMatch = url.match(/[-\w]{25,}/);
-                        if(idMatch) {
-                            // Usiamo l'ID corretto col simbolo $
-                            url = `https://drive.google.com/thumbnail?id=${idMatch[0]}&sz=w1000`;
-                        }
+                        if(idMatch) url = `https://drive.google.com/thumbnail?id=${idMatch[0]}&sz=w1000`;
                     }
-                    preview.src = url;
-                    preview.style.display = 'block';
-                    preview.style.minHeight = '200px';
-                    preview.style.objectFit = 'contain';
-                    
-                    // Se il link thumbnail fallisce, usa il vecchio "uc" come backup
-                    preview.onerror = function() {
-                        if(url.includes("thumbnail")) {
-                            const idBackup = url.match(/[-\w]{25,}/);
-                            this.src = `https://drive.google.com/uc?id=${idBackup[0]}`;
-                        }
-                    };
-                } else {
-                    preview.style.display = 'none';
-                }
-                saveBtn.innerText = "AGGIORNA DATI";
-
+                    preview.src = url; preview.style.display = 'block'; preview.style.minHeight = '200px';
+                } else { preview.style.display = 'none'; }
+                saveBtnText.innerText = "AGGIORNA DATI";
             } else {
-                // 3. RESET PER NUOVA US
-                document.getElementById('num_us').value = "";
-                document.getElementById('descrizione').value = "";
-                document.getElementById('interpretazione').value = "";
-                preview.style.display = 'none';
-                saveBtn.innerText = "INVIA DATI";
+                document.getElementById('num_us').value = ""; document.getElementById('descrizione').value = ""; document.getElementById('interpretazione').value = "";
+                preview.style.display = 'none'; saveBtnText.innerText = "INVIA DATI";
             }
-
-            document.getElementById('file_foto').value = ""; 
-            renderChips();
-            modal.style.display = 'flex'; 
-            modalContent.style.transform = 'translateY(0)';
+            document.getElementById('file_foto').value = ""; renderChips();
+            modal.style.display = 'flex'; modalContent.style.transform = 'translateY(0)';
         }
+
         function closeModal() { modalContent.style.transform = 'translateY(100%)'; setTimeout(() => modal.style.display = 'none', 300); }
         function addRapporto(t) { const n = prompt(`US che ${t}:`); if(n) { rapportiDati.push({id: Date.now(), tipo: t, num: n}); renderChips(); } }
         function renderChips() { chipsArea.innerHTML = ""; rapportiDati.forEach(r => { const c = document.createElement('div'); c.style="background:var(--primary-pink);padding:5px 10px;border-radius:15px;font-size:11px"; c.innerHTML = `${r.tipo}: ${r.num} <b onclick="removeRapporto(${r.id})" style="color:red;margin-left:5px">✕</b>`; chipsArea.appendChild(c); }); }
@@ -487,12 +388,11 @@
         const toB64 = f => new Promise((res, rej) => { const r = new FileReader(); r.readAsDataURL(f); r.onload = () => res(r.result); r.onerror = e => rej(e); });
 
         async function salvaDati() {
-            // Mostra Tavoletta e testo Salvataggio
             document.getElementById('icon-save').classList.add('show-icon');
             document.getElementById('icon-sync').classList.remove('show-icon');
             document.getElementById('loader-text').innerText = "ARCHIVIAZIONE US...";
             document.getElementById('loader').style.display = 'flex';
-            // ... resto del codice ...
+
             const btn = document.getElementById('save-btn-text'); btn.innerText = "Invio..."; btn.disabled = true;
             let fileObj = null;
             const fInput = document.getElementById('file_foto');
@@ -508,7 +408,7 @@
             };
             fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(p) })
             .then(() => { showToast("US Salvata!"); btn.disabled = false; closeModal(); caricaDatiDalDatabase(); })
-            .catch(() => { showToast("Errore!"); btn.disabled = false; });
+            .catch(() => { showToast("Errore!"); btn.disabled = false; document.getElementById('loader').style.display = 'none'; });
         }
 
         caricaDatiDalDatabase();
