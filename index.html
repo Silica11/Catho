@@ -39,7 +39,7 @@
             display: flex;
             justify-content: flex-start;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
 
         .back-btn {
@@ -58,19 +58,8 @@
         }
         .breadcrumb b { color: var(--accent-pink); opacity: 1; }
 
-        .search-bar { width: 100%; padding: 12px 20px; border-radius: 25px; border: none; background: var(--white); box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-size: 16px; outline: none; box-sizing: border-box; margin-bottom: 10px;}
+        .search-bar { width: 100%; padding: 12px 20px; border-radius: 25px; border: none; background: var(--white); box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-size: 16px; outline: none; box-sizing: border-box; }
         
-        /* BARRA COMPILATORE (MENU A TENDINA PULITO) */
-        .compiler-bar {
-            width: 100%; background: var(--white); border: 2px solid var(--primary-pink);
-            border-radius: 20px; padding: 10px 15px; display: flex; justify-content: space-between;
-            align-items: center; box-sizing: border-box; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-            margin-bottom: 15px; transition: border-color 0.2s;
-        }
-        .compiler-bar:active { border-color: var(--accent-pink); }
-        .compiler-label { font-size: 12px; color: gray; font-weight: bold; text-transform: uppercase; }
-        .compiler-name { font-size: 15px; color: var(--accent-pink); font-weight: bold; }
-
         .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 500px; padding-bottom: 100px; }
 
         /* BOX NORMALI */
@@ -199,477 +188,454 @@
                 <tspan x="32" y="24">𒆪𒀠𒁍𒌝𒀀𒇉𒄒𒉣</tspan>
                 <tspan x="32" y="30">𒌓𒄒𒉣𒋾𒀭𒆘𒀀</tspan>
                 <tspan x="32" y="36">𒀭𒌓𒀝𒆪𒌋𒀭</tspan>
-                <tspan x="32" y="42">𒈦𒇻𒀠𒁍𒌝𒀀𒇉</tspan>
-            </svg>
-
-        <svg class="archaeo-icon" style="position: absolute;" viewBox="0 0 64 64">
-            <line x1="28" y1="20" x2="36" y2="44" stroke-width="2.5" />
-            <path class="brush-anim" d="M32 15 L28 32 C28 35 36 35 36 32 Z" fill="var(--primary-pink)" stroke="var(--accent-pink)" stroke-width="1.5" />
-            <circle class="dust-particle" cx="24" cy="40" r="1.5" style="animation-delay: 0.2s;" />
-            <circle class="dust-particle" cx="40" cy="42" r="2" style="animation-delay: 0.5s;" />
-            <circle class="dust-particle" cx="32" cy="46" r="1" style="animation-delay: 0.8s;" />
+                <tspan x="32" y="42">𒈦𒇻𒀠𒁍𒌝𒆘𒀀𒁺</tspan>
+                <tspan x="32" y="48">𒀭𒀠𒀫𒀭𒈾</tspan>
+            </text>
+            <circle class="dust-particle" cx="30" cy="18" r="1.2" />
+            <circle class="dust-particle" cx="42" cy="22" r="0.8" style="animation-delay: 0.3s;"/>
+            <g class="brush-anim">
+                <rect x="30" y="2" width="4" height="18" rx="1" fill="var(--accent-pink)" /> 
+                <path d="M26 20 L38 20 L42 35 L22 35 Z" fill="var(--bg-color)" stroke-width="2" />
+            </g>
         </svg>
-        <div style="margin-top: 20px; font-weight: bold; color: var(--accent-pink); letter-spacing: 1px;" id="loader-text">CARICAMENTO...</div>
+        <div id="loader-text" style="margin-top: 15px; color: var(--accent-pink); font-weight: bold; font-size: 16px; letter-spacing: 1px;">ANALISI REPERTI...</div>
     </div>
 
-    <!-- TOAST NOTIFICATION -->
-    <div id="toast">Operazione completata</div>
+    <div id="toast">Messaggio</div>
 
+    <!-- HEADER: BACK, BREADCRUMB, SEARCH -->
     <div class="header-container">
         <div class="top-bar">
-            <button class="back-btn" id="backBtn" onclick="goBack()">←</button>
+            <div id="back-arrow" class="back-btn" onclick="goBack()">←</div>
         </div>
-        <div class="breadcrumb" id="breadcrumb">Radice</div>
-        
-        <!-- BARRA COMPILATORE (Menu a tendina superiore) -->
-        <div class="compiler-bar" onclick="changeCompilerPrompt()">
-            <div>
-                <div class="compiler-label">Compilatore di Default</div>
-                <div class="compiler-name" id="displayCompilerName">Non impostato (Clicca per inserire)</div>
-            </div>
-            <div style="font-size: 18px; color: var(--accent-pink);">▼</div>
-        </div>
-
-        <input type="text" class="search-bar" id="searchBar" placeholder="Cerca US o cartelle..." oninput="filterGrid()">
+        <div id="breadcrumb" class="breadcrumb">Home</div>
+        <input type="text" id="search-input" class="search-bar" placeholder="Cerca US..." oninput="cercaUS(this.value)">
     </div>
 
-    <div class="grid-container" id="gridContainer">
-        <!-- Generato Dinamicamente -->
-    </div>
+    <div id="main-grid" class="grid-container"></div>
 
-    <!-- MODALE COMPILAZIONE US -->
-    <div class="modal-overlay" id="modalOverlay">
-        <div class="modal-content" id="modalContent">
+    <!-- MODALE SCHEDA US -->
+    <div id="form-modal" class="modal-overlay" onclick="handleOverlayClick(event)">
+        <div class="modal-content" id="modal-content">
             <div class="drag-handle"></div>
-            <h2 id="modalTitle" style="color: var(--accent-pink); margin-top:0; margin-bottom:15px;">Nuova US</h2>
-            <form id="usForm" onsubmit="saveUS(event)">
-                
-                <div class="form-group">
-                    <label>Numero US</label>
-                    <input type="number" id="usNumber" required placeholder="Es. 1001">
-                </div>
-                
-                <div class="form-group">
-                    <label>Compilatore (Operatore)</label>
-                    <input type="text" id="usCompiler" required placeholder="Nome o sigla operatore">
-                </div>
+            <h2 style="text-align:center; color: var(--accent-pink); margin-top:0;">Scheda US</h2>
+            
+            <div class="form-group">
+                <label>Contesto</label>
+                <input type="text" id="form-context" readonly>
+            </div>
 
-                <div class="form-group">
-                    <label>Definizione Stratigrafica</label>
-                    <select id="usDefinizione" required>
-                        <option value="">Seleziona...</option>
-                        <option value="Strato">Strato</option>
-                        <option value="Muro">Muro</option>
-                        <option value="Taglio">Taglio</option>
-                        <option value="Riempimento">Riempimento</option>
-                        <option value="Fossa">Fossa</option>
-                        <option value="Pavimento">Pavimento</option>
-                    </select>
-                </div>
+            <div class="form-group">
+                <label>Numero US</label>
+                <input type="number" id="num_us" placeholder="Es: 100">
+            </div>
 
-                <div class="form-group">
-                    <label>Consistenza</label>
-                    <select id="usConsistenza">
-                        <option value="Compatta">Compatta</option>
-                        <option value="Media">Media</option>
-                        <option value="Sgombra/Semicompatta">Sgombra / Semicompatta</option>
-                        <option value="Sgretolabile/Sabbiosa">Sgretolabile / Sabbiosa</option>
-                    </select>
-                </div>
+            <div class="form-group">
+                <label>Tipo US</label>
+                <select id="tipo_us">
+                    <option value="piano">Piano</option>
+                    <option value="taglio">Taglio</option>
+                    <option value="riempimento">Riempimento</option>
+                    <option value="accumulo">Accumulo</option>
+                    <option value="installazione">Installazione</option>
+                </select>
+            </div>
 
-                <div class="form-group">
-                    <label>Colore Munsell o Descrittivo</label>
-                    <input type="text" id="usColore" placeholder="Es. 10YR 5/4 yellowish brown">
-                </div>
+            <div class="form-group">
+                <label>Operatore</label>
+                <select id="operatore">
+                    <option value="Archeologo 1">Archeologo 1</option>
+                    <option value="Archeologo 2">Archeologo 2</option>
+                </select>
+            </div>
 
-                <div class="form-group">
-                    <label>Descrizione sintetica</label>
-                    <textarea id="usDescrizione" rows="3" placeholder="Descrivi la US..."></textarea>
-                </div>
+            <div class="form-group">
+                <label>Foto</label>
+                <input type="file" id="file_foto" accept="image/*" style="margin-top: 5px;">
+                <img id="preview_foto" src="" style="width: 100%; margin-top: 10px; border-radius: 12px; display: none; border: 1px solid var(--primary-pink); object-fit: contain;">
+            </div>
 
-                <button type="submit" class="btn-save">Salva US</button>
-            </form>
+            <label>Rapporti Stratigrafici</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px;">
+                <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('Copre')">Copre</button>
+                <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('È coperto da')">Coperto da</button>
+                <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('Taglia')">Taglia</button>
+                <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('È tagliato da')">Tagliato da</button>
+                <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('Riempie')">Riempie</button>
+                <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('È riempito da')">Riempito da</button>
+            </div>
+            <div id="chips-area" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:10px;"></div>
+
+            <div class="form-group" style="margin-top:15px;">
+                <label>Descrizione</label>
+                <textarea id="descrizione" rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Interpretazione</label>
+                <textarea id="interpretazione" rows="3"></textarea>
+            </div>
+
+            <button class="btn-save" id="save-btn-text" onclick="salvaDati()">INVIA DATI</button>
+            <button onclick="closeModal()" style="width:100%; background:none; border:none; color:gray; margin-top:15px; cursor:pointer;">Annulla</button>
         </div>
     </div>
 
     <script>
-        let currentPath = []; // Esempio: ["Saggio A", "Ambiente 1"]
-        let db = JSON.parse(localStorage.getItem('us_db_v2')) || { name: "Radice", type: "folder", children: [] };
-        let activeUS = null; 
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwrcw9ubYVb83iuzwCCg5Dsg_Bb6hwktmyaJ2sj5hcxWOZEt4rmA8M884bbaSeNhb8r/exec';
 
-        // Gestione di Cat Dialog personalizzato
-        let dialogCallback = null;
+        let dataStruttura = {};
+        let currentLevel = "HOME";
+        let path = { scavo: "", cantiere: "", quadrante: "" };
+        let rapportiDati = [];
+        let databaseLocale = [];
 
-        function showCatDialog(title, message, isInput, defaultValue = "", callback) {
-            document.getElementById('dialog-title').innerText = title;
-            document.getElementById('dialog-message').innerText = message;
-            const inputField = document.getElementById('dialog-input');
-            
-            if (isInput) {
-                inputField.style.display = 'block';
-                inputField.value = defaultValue;
-                setTimeout(() => inputField.focus(), 100);
-            } else {
-                inputField.style.display = 'none';
-            }
-            
-            dialogCallback = callback;
-            document.getElementById('custom-dialog').style.display = 'flex';
+        const grid = document.getElementById('main-grid');
+        const breadcrumb = document.getElementById('breadcrumb');
+        const modal = document.getElementById('form-modal');
+        const modalContent = document.getElementById('modal-content');
+        const chipsArea = document.getElementById('chips-area');
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
         }
 
-        function closeCustomDialog(isOk) {
-            document.getElementById('custom-dialog').style.display = 'none';
-            const inputField = document.getElementById('dialog-input');
-            const val = inputField.value;
-            if (dialogCallback) {
-                dialogCallback(isOk, val);
-            }
-            dialogCallback = null;
-        }
+        /* --- GESTIONE DEI POP-UP CUSTOM (PROMPT E CONFIRM) --- */
+        let dialogResolve = null;
 
-        // Gestione del Compilatore in memoria locale (localStorage)
-        function getCompiler() {
-            return localStorage.getItem('us_default_compiler') || "";
-        }
-
-        function setCompiler(name) {
-            localStorage.setItem('us_default_compiler', name.trim());
-            updateCompilerDisplay();
-        }
-
-        function updateCompilerDisplay() {
-            const current = getCompiler();
-            const displayEl = document.getElementById('displayCompilerName');
-            if (current) {
-                displayEl.innerText = current;
-                displayEl.style.color = "var(--accent-pink)";
-            } else {
-                displayEl.innerText = "Non impostato (Clicca per inserire)";
-                displayEl.style.color = "#aaa";
-            }
-        }
-
-        function changeCompilerPrompt() {
-            const current = getCompiler();
-            showCatDialog("Cat dice", "Chi è il compilatore di default oggi?", true, current, (isOk, val) => {
-                if (isOk) {
-                    if (val && val.trim() !== "") {
-                        setCompiler(val);
-                        showToast("Compilatore aggiornato: " + val);
-                    } else {
-                        showCatDialog("Cat dice", "Il nome non può essere vuoto!", false, "", null);
-                    }
+        function showCustomDialog(type, message, title = "Cat dice") {
+            return new Promise((resolve) => {
+                dialogResolve = resolve;
+                document.getElementById('dialog-title').innerText = title;
+                document.getElementById('dialog-message').innerHTML = message;
+                const inputField = document.getElementById('dialog-input');
+                
+                if (type === 'prompt') {
+                    inputField.style.display = 'block';
+                    inputField.value = '';
+                    setTimeout(() => inputField.focus(), 100);
+                } else {
+                    inputField.style.display = 'none';
                 }
+                
+                document.getElementById('custom-dialog').style.display = 'flex';
             });
         }
 
-        // Controllo all'avvio del compilatore
-        window.addEventListener('DOMContentLoaded', () => {
-            updateCompilerDisplay();
-            const comp = getCompiler();
-            if (!comp) {
-                // Se manca, avvisa subito in modo gentile
-                setTimeout(() => {
-                    showCatDialog("Cat dice", "Benvenuto! Inserisci il nome o la sigla del compilatore per iniziare.", true, "", (isOk, val) => {
-                        if (isOk && val.trim() !== "") {
-                            setCompiler(val);
-                        } else {
-                            // Se insiste a lasciarlo vuoto, rimanda finché non lo mette o avvisa
-                            setCompiler("Ospite");
-                        }
-                    });
-                }, 500);
+        function closeCustomDialog(isConfirm) {
+            document.getElementById('custom-dialog').style.display = 'none';
+            if (dialogResolve) {
+                const inputField = document.getElementById('dialog-input');
+                if (inputField.style.display === 'block') {
+                    dialogResolve(isConfirm ? inputField.value.trim() : null);
+                } else {
+                    dialogResolve(isConfirm);
+                }
+                dialogResolve = null;
             }
+        }
+
+        document.getElementById('dialog-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') closeCustomDialog(true);
         });
 
-        // LOADER DINAMICO
-        function showLoader(text, callback) {
-            const loader = document.getElementById('loader');
-            document.getElementById('loader-text').innerText = text || "CARICAMENTO...";
-            loader.style.display = 'flex';
-            setTimeout(() => {
-                loader.style.display = 'none';
-                if(callback) callback();
-            }, 600); // Simulazione reattività immediata tavoletta d'argilla
-        }
+        function customConfirm(message) { return showCustomDialog('confirm', message); }
+        function customPrompt(message) { return showCustomDialog('prompt', message); }
+        /* ----------------------------------------------------- */
 
-        function showToast(text) {
-            const toast = document.getElementById('toast');
-            toast.innerText = text;
-            toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 2500);
-        }
+        // --- GESTIONE SWIPE RESISTENTE ---
+        let touchStartY = 0;
+        let isDragging = false;
 
-        function saveDB() {
-            localStorage.setItem('us_db_v2', JSON.stringify(db));
-        }
+        modalContent.addEventListener('touchstart', e => {
+            touchStartY = e.touches[0].clientY;
+            isDragging = false;
+        }, {passive: true});
 
-        function getCurrentFolder() {
-            let pointer = db;
-            for (let segment of currentPath) {
-                pointer = pointer.children.find(c => c.name === segment && c.type === 'folder');
+        modalContent.addEventListener('touchmove', e => {
+            const touchY = e.touches[0].clientY;
+            const diff = touchY - touchStartY;
+            if (diff > 0 && modalContent.scrollTop <= 0) {
+                isDragging = true;
+                e.preventDefault();
+                modalContent.style.transform = `translateY(${diff * 0.4}px)`;
+                modalContent.style.transition = 'none';
             }
-            return pointer;
-        }
+        }, {passive: false});
 
-        function render() {
-            const grid = document.getElementById('gridContainer');
-            const breadcrumb = document.getElementById('breadcrumb');
-            const backBtn = document.getElementById('backBtn');
-            const searchBar = document.getElementById('searchBar');
+        modalContent.addEventListener('touchend', e => {
+            if (!isDragging) return;
+            const diff = e.changedTouches[0].clientY - touchStartY;
+            modalContent.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+            if (diff > 200) closeModal();
+            else modalContent.style.transform = `translateY(0)`;
+            isDragging = false;
+        });
 
-            grid.innerHTML = '';
-            
-            // Breadcrumb text
-            if (currentPath.length === 0) {
-                breadcrumb.innerHTML = "Radice / <b>Tutti i contesti</b>";
-                backBtn.style.display = 'none';
-            } else {
-                breadcrumb.innerHTML = "Radice / " + currentPath.join(" / ");
-                backBtn.style.display = 'flex';
-            }
+        function handleOverlayClick(e) { if(e.target === modal) closeModal(); }
 
-            const folder = getCurrentFolder();
+        document.getElementById('file_foto').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('preview_foto');
+            if (file) { preview.src = URL.createObjectURL(file); preview.style.display = 'block'; }
+        });
 
-            // Pulsanti di creazione fissa in cima
-            const addFolderBox = document.createElement('div');
-            addFolderBox.className = 'box-add';
-            addFolderBox.innerHTML = `<div class="box-add-icon">📁+</div><span>Crea Cartella</span>`;
-            addFolderBox.onclick = promptCreateFolder;
-            grid.appendChild(addFolderBox);
-
-            const addUSBox = document.createElement('div');
-            addUSBox.className = 'box-add';
-            addUSBox.innerHTML = `<div class="box-add-icon">📝+</div><span>Nuova US</span>`;
-            addUSBox.onclick = openNewUSModal;
-            grid.appendChild(addUSBox);
-
-            // Elementi della cartella corrente
-            folder.children.forEach((item, index) => {
-                const box = document.createElement('div');
-                box.className = 'box';
-                
-                // Tasto Elimina rapido sull'elemento
-                const delBtn = document.createElement('div');
-                delBtn.className = 'delete-btn';
-                delBtn.innerHTML = '×';
-                delBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    showCatDialog("Cat dice", `Vuoi davvero eliminare "${item.name}"?`, false, "", (isOk) => {
-                        if(isOk) {
-                            folder.children.splice(index, 1);
-                            saveDB();
-                            showLoader("AGGIORNAMENTO...", () => {
-                                render();
-                                showToast("Elemento eliminato");
-                            });
-                        }
-                    });
-                };
-                box.appendChild(delBtn);
-
-                if (item.type === 'folder') {
-                    box.innerHTML += `<div class="box-icon">📁</div><span>${item.name}</span>`;
-                    box.onclick = () => {
-                        showLoader("APERTURA CARTELLA...", () => {
-                            currentPath.push(item.name);
-                            searchBar.value = '';
-                            render();
-                        });
-                    };
-                } else {
-                    box.innerHTML += `<div class="box-icon">📄</div><span>US ${item.data.usNumber}</span><div style="font-size:11px; color:#888; margin-top:4px;">${item.data.usDefinizione}</div>`;
-                    box.onclick = () => openEditUSModal(item, index);
+        async function caricaDatiDalDatabase(isSearchReturn = false) {
+            document.getElementById('loader-text').innerText = "SINCRONIZZAZIONE...";
+            document.getElementById('loader').style.display = 'flex';
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const data = await response.json();
+                databaseLocale = data.us || [];
+                if (data.strutturaObj) dataStruttura = data.strutturaObj;
+                if (!isSearchReturn) render();
+                else {
+                    currentLevel = "US_LIST";
+                    document.getElementById('search-input').value = "";
+                    render();
                 }
-                grid.appendChild(box);
-            });
+            } catch (e) { showToast("Errore connessione"); }
+            finally { document.getElementById('loader').style.display = 'none'; }
         }
 
-        function goBack() {
-            showLoader("TORNO INDIETRO...", () => {
-                currentPath.pop();
-                document.getElementById('searchBar').value = '';
-                render();
-            });
-        }
-
-        function promptCreateFolder() {
-            showCatDialog("Cat dice", "Inserisci il nome della nuova cartella (es. Saggio B, Vano 3):", true, "", (isOk, folderName) => {
-                if (isOk && folderName && folderName.trim() !== "") {
-                    const folder = getCurrentFolder();
-                    if(folder.children.some(c => c.name === folderName && c.type === 'folder')) {
-                        showCatDialog("Cat dice", "Esiste già una cartella con questo nome!", false, "", null);
-                        return;
-                    }
-                    folder.children.push({ name: folderName.trim(), type: 'folder', children: [] });
-                    saveDB();
-                    showLoader("CREAZIONE...", () => {
-                        render();
-                        showToast("Cartella creata con successo");
-                    });
-                }
-            });
-        }
-
-        // APERTURA MODALE NUOVA US
-        function openNewUSModal() {
-            // CONTROLLO OBBLIGATORIO COMPILATORE
-            const defaultComp = getCompiler();
-            if (!defaultComp) {
-                showCatDialog("Cat dice", "Imposta prima un compilatore cliccando sulla barra in alto!", false, "", null);
-                return;
+        function navTo(level, name = "") {
+            document.getElementById('search-input').value = ""; 
+            if (level === 'HOME') {
+                path.scavo = ""; path.cantiere = ""; path.quadrante = "";
+                currentLevel = "HOME";
+            } else if (level === 'CANTIERE') {
+                path.scavo = name; path.cantiere = ""; path.quadrante = "";
+                currentLevel = "CANTIERE";
+            } else if (level === 'QUADRANTE') {
+                path.cantiere = name; path.quadrante = "";
+                currentLevel = "QUADRANTE";
             }
-
-            activeUS = null;
-            document.getElementById('modalTitle').innerText = "Nuova US";
-            document.getElementById('usForm').reset();
-            
-            // Assegna in automatico il compilatore salvato in memoria
-            document.getElementById('usCompiler').value = defaultComp;
-
-            document.getElementById('modalOverlay').style.display = 'flex';
-        }
-
-        function openEditUSModal(item, index) {
-            activeUS = { item, index };
-            document.getElementById('modalTitle').innerText = "Modifica US " + item.data.usNumber;
-            document.getElementById('usNumber').value = item.data.usNumber;
-            document.getElementById('usCompiler').value = item.data.usCompiler || getCompiler();
-            document.getElementById('usDefinizione').value = item.data.usDefinizione;
-            document.getElementById('usConsistenza').value = item.data.usConsistenza;
-            document.getElementById('usColore').value = item.data.usColore;
-            document.getElementById('usDescrizione').value = item.data.usDescrizione;
-
-            document.getElementById('modalOverlay').style.display = 'flex';
-        }
-
-        function saveUS(e) {
-            e.preventDefault();
-            
-            const compilerVal = document.getElementById('usCompiler').value.trim();
-            if(!compilerVal) {
-                showCatDialog("Cat dice", "Il campo compilatore non può essere vuoto!", false, "", null);
-                return;
-            }
-
-            const usData = {
-                usNumber: document.getElementById('usNumber').value,
-                usCompiler: compilerVal,
-                usDefinizione: document.getElementById('usDefinizione').value,
-                usConsistenza: document.getElementById('usConsistenza').value,
-                usColore: document.getElementById('usColore').value,
-                usDescrizione: document.getElementById('usDescrizione').value
-            };
-
-            const folder = getCurrentFolder();
-
-            if (activeUS === null) {
-                // Nuova
-                folder.children.push({ name: "US " + usData.usNumber, type: 'us', data: usData });
-                showToast("US salvata con successo");
-            } else {
-                // Modifica
-                folder.children[activeUS.index] = { name: "US " + usData.usNumber, type: 'us', data: usData };
-                showToast("US aggiornata");
-            }
-
-            saveDB();
-            closeModal();
             render();
         }
 
-        function closeModal() {
-            document.getElementById('modalOverlay').style.display = 'none';
+        function goBack() {
+            if (currentLevel === "CANTIERE") navTo('HOME');
+            else if (currentLevel === "QUADRANTE") navTo('CANTIERE', path.scavo);
+            else if (currentLevel === "US_LIST") navTo('QUADRANTE', path.cantiere);
         }
 
-        // Chiusura modale cliccando fuori o trascinando in basso
-        const modalOverlay = document.getElementById('modalOverlay');
-        const modalContent = document.getElementById('modalContent');
-        let startY = 0;
-
-        modalContent.addEventListener('touchstart', (e) => {
-            startY = e.touches[0].clientY;
-        }, {passive: true});
-
-        modalContent.addEventListener('touchmove', (e) => {
-            let currentY = e.touches[0].clientY;
-            if (currentY - startY > 100 && modalContent.scrollTop === 0) {
-                closeModal();
-            }
-        }, {passive: true});
-
-        modalOverlay.addEventListener('click', (e) => {
-            if (e.target === modalOverlay) closeModal();
-        });
-
-        // Filtro di ricerca istantaneo
-        function filterGrid() {
-            const query = document.getElementById('searchBar').value.toLowerCase();
-            const grid = document.getElementById('gridContainer');
-            const folder = getCurrentFolder();
-
-            // Svuota e ricarica i box fissi
-            grid.innerHTML = '';
+        function render() {
+            grid.innerHTML = ""; 
+            const backArrow = document.getElementById('back-arrow');
             
-            const addFolderBox = document.createElement('div');
-            addFolderBox.className = 'box-add';
-            addFolderBox.innerHTML = `<div class="box-add-icon">📁+</div><span>Crea Cartella</span>`;
-            addFolderBox.onclick = promptCreateFolder;
-            grid.appendChild(addFolderBox);
+            let bcText = "Home";
+            if (currentLevel === "HOME") {
+                backArrow.style.display = "none";
+            } else {
+                backArrow.style.display = "flex";
+                if (path.scavo) bcText = path.scavo;
+                if (path.cantiere) bcText += ` > ${path.cantiere}`;
+                if (path.quadrante && currentLevel === "US_LIST") bcText += ` > <b>${path.quadrante}</b>`;
+            }
+            breadcrumb.innerHTML = bcText;
 
-            const addUSBox = document.createElement('div');
-            addUSBox.className = 'box-add';
-            addUSBox.innerHTML = `<div class="box-add-icon">📝+</div><span>Nuova US</span>`;
-            addUSBox.onclick = openNewUSModal;
-            grid.appendChild(addUSBox);
+            // CREAZIONE DEL BOX "AGGIUNGI" DINAMICO
+            const addBox = document.createElement('div');
+            addBox.className = 'box-add';
+            
+            if (currentLevel === "HOME") {
+                addBox.innerHTML = `<div class='box-add-icon'>+</div>Aggiungi Scavo`;
+                addBox.onclick = handleFabClick;
+                grid.appendChild(addBox);
+                
+                Object.keys(dataStruttura).forEach(s => createBox(s, "🏗️", () => navTo('CANTIERE', s)));
+                
+            } else if (currentLevel === "CANTIERE") {
+                addBox.innerHTML = `<div class='box-add-icon'>+</div>Aggiungi Cantiere`;
+                addBox.onclick = handleFabClick;
+                grid.appendChild(addBox);
+                
+                const cantieri = dataStruttura[path.scavo] || {};
+                Object.keys(cantieri).forEach(c => createBox(c, "🚧", () => navTo('QUADRANTE', c)));
+                
+            } else if (currentLevel === "QUADRANTE") {
+                addBox.innerHTML = `<div class='box-add-icon'>+</div>Aggiungi Quadrante`;
+                addBox.onclick = handleFabClick;
+                grid.appendChild(addBox);
+                
+                const quadranti = (dataStruttura[path.scavo] && dataStruttura[path.scavo][path.cantiere]) ? dataStruttura[path.scavo][path.cantiere] : [];
+                quadranti.forEach(q => createBox(q, "🟦", () => { path.quadrante = q; currentLevel = "US_LIST"; render(); }));
+                
+            } else if (currentLevel === "US_LIST") {
+                addBox.style.height = "50px"; 
+                addBox.style.minHeight = "50px";
+                addBox.style.flexDirection = "row";
+                addBox.style.gap = "10px";
+                addBox.innerHTML = `<div style="font-size:24px; font-weight:normal;">+</div><div>Aggiungi US</div>`;
+                addBox.onclick = () => openForm();
+                grid.appendChild(addBox);
 
-            folder.children.forEach((item, index) => {
-                const matchName = item.name.toLowerCase().includes(query);
-                const matchNum = item.type === 'us' && item.data.usNumber.toLowerCase().includes(query);
-                const matchDef = item.type === 'us' && item.data.usDefinizione.toLowerCase().includes(query);
-
-                if (query === '' || matchName || matchNum || matchDef) {
-                    const box = document.createElement('div');
-                    box.className = 'box';
-                    
-                    const delBtn = document.createElement('div');
-                    delBtn.className = 'delete-btn';
-                    delBtn.innerHTML = '×';
-                    delBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        showCatDialog("Cat dice", `Vuoi davvero eliminare "${item.name}"?`, false, "", (isOk) => {
-                            if(isOk) {
-                                folder.children.splice(index, 1);
-                                saveDB();
-                                filterGrid();
-                                showToast("Elemento eliminato");
-                            }
-                        });
-                    };
-                    box.appendChild(delBtn);
-
-                    if (item.type === 'folder') {
-                        box.innerHTML += `<div class="box-icon">📁</div><span>${item.name}</span>`;
-                        box.onclick = () => {
-                            showLoader("APERTURA CARTELLA...", () => {
-                                currentPath.push(item.name);
-                                document.getElementById('searchBar').value = '';
-                                render();
-                            });
-                        };
-                    } else {
-                        box.innerHTML += `<div class="box-icon">📄</div><span>US ${item.data.usNumber}</span><div style="font-size:11px; color:#888; margin-top:4px;">${item.data.usDefinizione}</div>`;
-                        box.onclick = () => openEditUSModal(item, index);
-                    }
-                    grid.appendChild(box);
+                const filtrat = databaseLocale.filter(u => u.Scavo == path.scavo && u.Cantiere == path.cantiere && u.Quadrante == path.quadrante);
+                if(filtrat.length === 0) {
+                    const emptyMsg = document.createElement('p');
+                    emptyMsg.style.gridColumn = "1/-1";
+                    emptyMsg.style.textAlign = "center";
+                    emptyMsg.style.color = "gray";
+                    emptyMsg.innerText = "Nessuna US inserita.";
+                    grid.appendChild(emptyMsg);
                 }
+                filtrat.forEach(us => {
+                    const div = document.createElement('div'); div.className = 'box'; div.style.height="50px"; div.style.flexDirection="row"; div.style.justifyContent="space-between"; div.style.border="1px dashed var(--accent-pink)";
+                    div.innerHTML = `<div class='delete-btn' onclick='event.stopPropagation(); eliminaUS("${us.Numero_US}")'>✕</div><div style='display:flex;align-items:center;gap:10px'><span style='font-size:10px;color:var(--accent-pink);font-weight:bold'>US</span><b>${us.Numero_US}</b></div><small style='color:gray'>${us.Tipo_US}</small>`;
+                    div.onclick = () => openForm(us); grid.appendChild(div);
+                });
+            }
+        }
+
+        function createBox(text, icon, onClick) {
+            const div = document.createElement('div'); div.className = 'box';
+            const safeText = text.replace(/'/g, "\\'");
+            div.innerHTML = `<div class='delete-btn' onclick='event.stopPropagation(); deleteItem(\`${safeText}\`)'>✕</div><div class='box-icon'>${icon}</div>${text}`;
+            div.onclick = onClick; grid.appendChild(div);
+        }
+
+        function cercaUS(q) {
+            q = q.trim().toLowerCase(); if(!q) { render(); return; }
+            breadcrumb.innerHTML = `<span>Risultati per: "${q}"</span>`; 
+            grid.innerHTML = "";
+            databaseLocale.filter(u => String(u.Numero_US).includes(q)).forEach(us => {
+                const div = document.createElement('div'); div.className = 'box'; div.style.minHeight="60px"; div.style.alignItems="flex-start";
+                div.innerHTML = `<div class='delete-btn' onclick='event.stopPropagation(); eliminaUS("${us.Numero_US}")'>✕</div><div style='width:100%; display:flex; justify-content:space-between; padding-left:10px;'><b>US ${us.Numero_US}</b><small>${us.Tipo_US}</small></div><div style='font-size:10px; color:var(--accent-pink); padding-left:10px;'>📍 ${us.Scavo} | ${us.Cantiere} | ${us.Quadrante}</div>`;
+                div.onclick = () => { path.scavo = us.Scavo; path.cantiere = us.Cantiere; path.quadrante = us.Quadrante; openForm(us, true); }; grid.appendChild(div);
             });
         }
 
-        // Avvio iniziale
-        render();
+        async function handleFabClick() {
+            let entita = "Scavo";
+            if(currentLevel === "CANTIERE") entita = "Cantiere";
+            if(currentLevel === "QUADRANTE") entita = "Quadrante";
+
+            const nuovo = await customPrompt(`Inserisci nome del nuovo <b>${entita}</b>:`); 
+            if (!nuovo) return;
+            
+            if (currentLevel === "HOME") dataStruttura[nuovo] = {};
+            else if (currentLevel === "CANTIERE") dataStruttura[path.scavo][nuovo] = [];
+            else if (currentLevel === "QUADRANTE") dataStruttura[path.scavo][path.cantiere].push(nuovo);
+            
+            render(); 
+            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "SAVE_STRUTTURA", struttura: dataStruttura }) });
+            showToast("Aggiunto!");
+        }
+
+        async function deleteItem(i) {
+            const confermato = await customConfirm(`Vuoi davvero eliminare <b>${i}</b> e TUTTE le US contenute al suo interno?`);
+            if(!confermato) return;
+
+            let usDaEliminare = [];
+
+            if(currentLevel === "HOME") {
+                usDaEliminare = databaseLocale.filter(us => us.Scavo === i);
+                delete dataStruttura[i];
+            }
+            else if(currentLevel === "CANTIERE") {
+                usDaEliminare = databaseLocale.filter(us => us.Scavo === path.scavo && us.Cantiere === i);
+                delete dataStruttura[path.scavo][i];
+            }
+            else if(currentLevel === "QUADRANTE") {
+                usDaEliminare = databaseLocale.filter(us => us.Scavo === path.scavo && us.Cantiere === path.cantiere && us.Quadrante === i);
+                dataStruttura[path.scavo][path.cantiere] = dataStruttura[path.scavo][path.cantiere].filter(q => q !== i);
+            }
+
+            render(); 
+            
+            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "SAVE_STRUTTURA", struttura: dataStruttura }) });
+
+            usDaEliminare.forEach(us => {
+                fetch(SCRIPT_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    body: JSON.stringify({ action: "DELETE_US", scavo: us.Scavo, cantiere: us.Cantiere, quadrante: us.Quadrante, numero_us: us.Numero_US }) 
+                });
+            });
+
+            databaseLocale = databaseLocale.filter(us => !usDaEliminare.includes(us));
+            showToast(`Cartella e ${usDaEliminare.length} US eliminate!`);
+        }
+
+        async function eliminaUS(numero_us) {
+            const confermato = await customConfirm(`Vuoi davvero eliminare l'US <b>${numero_us}</b>?`);
+            if(!confermato) return;
+
+            databaseLocale = databaseLocale.filter(us => String(us.Numero_US) !== String(numero_us));
+            render();
+            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "DELETE_US", scavo: path.scavo, cantiere: path.cantiere, quadrante: path.quadrante, numero_us: numero_us }) })
+            .then(() => { showToast("US eliminata"); caricaDatiDalDatabase(); });
+        }
+
+        let isFromSearch = false;
+        function openForm(d = null, fromSearch = false) {
+            isFromSearch = fromSearch;
+            document.getElementById('form-context').value = `${path.scavo} | ${path.cantiere} | ${path.quadrante}`;
+            const preview = document.getElementById('preview_foto');
+            const saveBtnText = document.getElementById('save-btn-text');
+            rapportiDati = [];
+            if(d) {
+                const map = { "Copre": d.Copre, "È coperto da": d.Coperto_da, "Taglia": d.Taglia, "È tagliato da": d.Tagliato_da, "Riempie": d.Riempie, "È riempito da": d.Riempito_da };
+                Object.keys(map).forEach(t => { if(map[t]) map[t].toString().split(',').forEach(n => { if(n.trim()) rapportiDati.push({id: Math.random(), tipo: t, num: n.trim()}); })});
+                document.getElementById('num_us').value = d.Numero_US || "";
+                document.getElementById('tipo_us').value = (d.Tipo_US || "piano").toLowerCase();
+                document.getElementById('descrizione').value = d.Descrizione || "";
+                document.getElementById('interpretazione').value = d.Interpretazione || "";
+                let url = d.Link || d.link || d.LINK || d.URL || "";
+                if(url && url.length > 10) {
+                    if(url.includes("drive.google.com")) {
+                        const idMatch = url.match(/[-\w]{25,}/);
+                        if(idMatch) url = `https://drive.google.com/thumbnail?id=${idMatch[0]}&sz=w1000`;
+                    }
+                    preview.src = url; preview.style.display = 'block'; preview.style.minHeight = '200px';
+                } else { preview.style.display = 'none'; }
+                saveBtnText.innerText = "AGGIORNA DATI";
+            } else {
+                document.getElementById('num_us').value = ""; document.getElementById('descrizione').value = ""; document.getElementById('interpretazione').value = "";
+                preview.style.display = 'none'; saveBtnText.innerText = "INVIA DATI";
+            }
+            document.getElementById('file_foto').value = ""; renderChips();
+            modal.style.display = 'flex'; modalContent.style.transform = 'translateY(0)';
+        }
+
+        function closeModal() { modalContent.style.transform = 'translateY(100%)'; setTimeout(() => modal.style.display = 'none', 300); }
+        
+        async function addRapporto(t) { 
+            const n = await customPrompt(`Inserisci il numero dell'US che <b>${t}</b>:`); 
+            if(n) { 
+                rapportiDati.push({id: Date.now(), tipo: t, num: n}); 
+                renderChips(); 
+            } 
+        }
+
+        function renderChips() { chipsArea.innerHTML = ""; rapportiDati.forEach(r => { const c = document.createElement('div'); c.style="background:var(--primary-pink);padding:5px 10px;border-radius:15px;font-size:11px"; c.innerHTML = `${r.tipo}: ${r.num} <b onclick="removeRapporto(${r.id})" style="color:red;margin-left:5px">✕</b>`; chipsArea.appendChild(c); }); }
+        function removeRapporto(id) { rapportiDati = rapportiDati.filter(r => r.id !== id); renderChips(); }
+
+        const toB64 = f => new Promise((res, rej) => { const r = new FileReader(); r.readAsDataURL(f); r.onload = () => res(r.result); r.onerror = e => rej(e); });
+
+        async function salvaDati() {
+            document.getElementById('loader-text').innerText = "ARCHIVIAZIONE US...";
+            document.getElementById('loader').style.display = 'flex';
+            const btn = document.getElementById('save-btn-text'); btn.innerText = "Invio..."; btn.disabled = true;
+            let fileObj = null; const fInput = document.getElementById('file_foto');
+            if(fInput.files.length > 0) {
+                const f = fInput.files[0]; const b64 = await toB64(f);
+                fileObj = { base64: b64.split(',')[1], type: f.type };
+            }
+            const p = {
+                action: "SAVE_US", scavo: path.scavo, cantiere: path.cantiere, quadrante: path.quadrante,
+                numero_us: document.getElementById('num_us').value, tipo_us: document.getElementById('tipo_us').value,
+                operatore: document.getElementById('operatore').value, fotoFile: fileObj, rapporti: rapportiDati,
+                descrizione: document.getElementById('descrizione').value, interpretazione: document.getElementById('interpretazione').value
+            };
+            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(p) })
+            .then(() => { showToast("US Salvata!"); btn.disabled = false; closeModal(); caricaDatiDalDatabase(isFromSearch); })
+            .catch(() => { showToast("Errore!"); btn.disabled = false; document.getElementById('loader').style.display = 'none'; });
+        }
+
+        caricaDatiDalDatabase();
     </script>
 </body>
 </html>
