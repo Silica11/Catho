@@ -408,13 +408,42 @@
         }
 
         function deleteItem(i) {
-            if(!confirm(`Vuoi davvero eliminare ${i}?`)) return;
-            if(currentLevel === "HOME") delete dataStruttura[i];
-            else if(currentLevel === "CANTIERE") delete dataStruttura[path.scavo][i];
-            else if(currentLevel === "QUADRANTE") dataStruttura[path.scavo][path.cantiere] = dataStruttura[path.scavo][path.cantiere].filter(q => q !== i);
+            if(!confirm(`Vuoi davvero eliminare ${i} e TUTTE le US contenute al suo interno?`)) return;
+
+            let usDaEliminare = [];
+
+            // Identifica le US da eliminare in base al livello in cui ci troviamo
+            if(currentLevel === "HOME") {
+                usDaEliminare = databaseLocale.filter(us => us.Scavo === i);
+                delete dataStruttura[i];
+            }
+            else if(currentLevel === "CANTIERE") {
+                usDaEliminare = databaseLocale.filter(us => us.Scavo === path.scavo && us.Cantiere === i);
+                delete dataStruttura[path.scavo][i];
+            }
+            else if(currentLevel === "QUADRANTE") {
+                usDaEliminare = databaseLocale.filter(us => us.Scavo === path.scavo && us.Cantiere === path.cantiere && us.Quadrante === i);
+                dataStruttura[path.scavo][path.cantiere] = dataStruttura[path.scavo][path.cantiere].filter(q => q !== i);
+            }
+
             render(); 
+            
+            // 1. Salva la nuova struttura (senza la cartella)
             fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "SAVE_STRUTTURA", struttura: dataStruttura }) });
-            showToast("Eliminato!");
+
+            // 2. Manda il comando di eliminazione al server per ogni US trovata
+            usDaEliminare.forEach(us => {
+                fetch(SCRIPT_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    body: JSON.stringify({ action: "DELETE_US", scavo: us.Scavo, cantiere: us.Cantiere, quadrante: us.Quadrante, numero_us: us.Numero_US }) 
+                });
+            });
+
+            // 3. Rimuovi le US eliminate dal database locale (così non compaiono più nella barra di ricerca)
+            databaseLocale = databaseLocale.filter(us => !usDaEliminare.includes(us));
+
+            showToast(`Cartella e ${usDaEliminare.length} US eliminate!`);
         }
 
         function eliminaUS(numero_us) {
