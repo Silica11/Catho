@@ -13,7 +13,6 @@
             --bg-color: #fff5f8;
         }
 
-        /* Impedisce il ricaricamento trascinando verso il basso */
         html, body { 
             overscroll-behavior-y: contain; 
             overflow: hidden;
@@ -32,32 +31,47 @@
             overflow-y: auto;
         }
 
-        /* PULSANTE INDIETRO */
-        .back-container {
-            width: 100%; max-width: 500px;
-            display: flex; align-items: center;
-            margin-bottom: 10px;
+        .header-container { width: 100%; max-width: 500px; margin-bottom: 20px; }
+        
+        .top-bar {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 10px;
+        }
+
+        .hamburger-btn {
+            background: none; border: none; color: var(--accent-pink);
+            font-size: 32px; cursor: pointer; padding: 0; margin: 0;
+            display: flex; align-items: center; justify-content: center;
+            line-height: 1;
         }
 
         .back-btn {
-            display: none; /* Gestito da JS */
+            display: none; 
             align-items: center; justify-content: center;
             background: var(--white); color: var(--accent-pink);
             border: 2px solid var(--primary-pink); border-radius: 50%;
             width: 35px; height: 35px; cursor: pointer;
-            font-size: 20px; margin-right: 12px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            font-size: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
 
         .breadcrumb { 
             font-size: 14px; color: var(--dark-text); 
-            font-weight: 500; opacity: 0.8;
+            font-weight: 500; opacity: 0.8; margin-bottom: 10px;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .breadcrumb b { color: var(--accent-pink); opacity: 1; }
 
-        .header-container { width: 100%; max-width: 500px; margin-bottom: 20px; }
         .search-bar { width: 100%; padding: 12px 20px; border-radius: 25px; border: none; background: var(--white); box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-size: 16px; outline: none; box-sizing: border-box; }
+
+        .filter-pill {
+            padding: 6px 14px; border-radius: 15px; background: var(--white); color: var(--dark-text);
+            font-size: 12px; font-weight: 600; cursor: pointer; border: 1.5px solid var(--primary-pink);
+            transition: 0.2s; user-select: none;
+        }
+        .filter-pill.active { background: var(--accent-pink); color: white; border-color: var(--accent-pink); }
         
         .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 500px; padding-bottom: 100px; }
 
@@ -66,6 +80,17 @@
             font-weight: 600; cursor: pointer; transition: transform 0.2s; border: 2px solid var(--primary-pink);
             display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 90px; position: relative;
         }
+        .box:active { transform: scale(0.95); }
+        .box-icon { font-size: 24px; margin-bottom: 10px; }
+
+        .box-add {
+            background: var(--accent-pink); padding: 20px 15px; border-radius: 20px; text-align: center;
+            font-weight: bold; color: white; cursor: pointer; transition: transform 0.2s; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 90px;
+            box-shadow: 0 6px 15px rgba(240, 98, 146, 0.3); border: none;
+        }
+        .box-add:active { transform: scale(0.95); }
+        .box-add-icon { font-size: 28px; margin-bottom: 5px; font-weight: normal; }
 
         .delete-btn {
             position: absolute; top: -10px; left: -10px; background: #ff5252; color: white; border-radius: 50%;
@@ -73,15 +98,28 @@
             font-size: 14px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); cursor: pointer; z-index: 10; border: 2px solid white;
         }
 
-        .box:active { transform: scale(0.95); }
-        .box-icon { font-size: 24px; margin-bottom: 10px; }
-
-        .fab {
-            position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background-color: var(--accent-pink);
-            color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 30px; box-shadow: 0 4px 15px rgba(240, 98, 146, 0.4); cursor: pointer; z-index: 999;
+        /* SIDEBAR */
+        .sidebar-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);
+            display: none; z-index: 10002; backdrop-filter: blur(2px);
+            opacity: 0; transition: opacity 0.3s ease;
         }
+        .sidebar {
+            position: fixed; top: 0; left: -300px; width: 280px; height: 100%;
+            background: var(--white); z-index: 10003; transition: left 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 2px 0 15px rgba(0,0,0,0.2); padding: 25px; box-sizing: border-box;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-header {
+            font-size: 22px; font-weight: bold; color: var(--accent-pink);
+            margin-bottom: 25px; border-bottom: 2px solid var(--primary-pink); padding-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .sidebar-close { font-size: 24px; cursor: pointer; color: var(--dark-text); }
+        .sidebar-content { flex: 1; overflow-y: auto; }
+        .reg-info-text { font-size: 13px; color: #666; margin: 0 0 10px 0; line-height: 1.4; }
 
+        /* MODALE SCHEDA US */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);
             display: none; justify-content: center; align-items: flex-end; z-index: 1000;
@@ -99,36 +137,47 @@
 
         .drag-handle { width: 40px; height: 5px; background: #ddd; border-radius: 3px; margin: 0 auto 15px auto; }
         .form-group { margin-bottom: 15px; }
-        label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 5px; color: var(--accent-pink); }
+        
+        .label-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .label-header label { font-size: 14px; font-weight: 600; color: var(--accent-pink); margin: 0; display:block; }
+        .mic-btn { background: none; border: none; font-size: 18px; cursor: pointer; transition: 0.2s; padding: 0 5px; }
+        
         input, select, textarea { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--primary-pink); font-size: 16px; box-sizing: border-box; }
         input[readonly] { background-color: #f2f2f2; color: #888; }
         .btn-save { width: 100%; padding: 15px; background: var(--accent-pink); color: white; border: none; border-radius: 15px; font-size: 18px; font-weight: bold; margin-top: 10px; cursor: pointer; }
 
-        /* --- LOADER TAVOLETTA --- */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        /* DIALOG E LOADER */
+        .custom-dialog-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(3px);
+            display: none; align-items: center; justify-content: center; z-index: 10005;
+        }
+        .custom-dialog-box {
+            background: white; padding: 25px; border-radius: 20px; width: 85%; max-width: 350px;
+            text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 2px solid var(--primary-pink);
+        }
+        .custom-dialog-title { color: var(--accent-pink); margin: 0 0 15px 0; font-size: 20px; }
+        .custom-dialog-message { margin-bottom: 20px; font-size: 16px; color: var(--dark-text); }
+        .custom-dialog-input { display: none; width: 100%; margin-bottom: 20px; padding: 12px; border-radius: 12px; border: 1px solid var(--accent-pink); box-sizing: border-box; font-size:16px;}
+        .custom-dialog-buttons { display: flex; gap: 10px; justify-content: center; }
+        .custom-btn-cancel { flex: 1; padding: 12px; border: none; background: #e0e0e0; color: #555; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        .custom-btn-ok { flex: 1; padding: 12px; border: none; background: var(--accent-pink); color: white; border-radius: 12px; font-weight: bold; cursor: pointer; }
+
         .loader-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: var(--bg-color); display: none; flex-direction: column;
             justify-content: center; align-items: center; z-index: 9999;
         }
-
         .archaeo-icon {
             width: 160px; height: 160px; fill: none; stroke: var(--accent-pink);
-            stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
-            transform-box: fill-box;
+            stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; transform-box: fill-box;
         }
-
         .brush-anim { animation: dusting 1.2s ease-in-out infinite; transform-origin: top center; }
         .dust-particle { animation: puff 1.2s ease-in-out infinite; fill: var(--accent-pink); stroke: none; }
-
-        @keyframes dusting {
-            0%, 100% { transform: rotate(-22deg) translateX(-8px); }
-            50% { transform: rotate(22deg) translateX(8px); }
-        }
-
-        @keyframes puff {
-            0%, 100% { opacity: 0; transform: translateY(0) scale(0.5); }
-            50% { opacity: 0.6; transform: translateY(-12px) scale(1.2); }
-        }
+        @keyframes dusting { 0%, 100% { transform: rotate(-22deg) translateX(-8px); } 50% { transform: rotate(22deg) translateX(8px); } }
+        @keyframes puff { 0%, 100% { opacity: 0; transform: translateY(0) scale(0.5); } 50% { opacity: 0.6; transform: translateY(-12px) scale(1.2); } }
 
         #toast {
             position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
@@ -141,11 +190,46 @@
 </head>
 <body>
 
+    <!-- MENU A SCORRIMENTO -->
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+    <div id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <span>Menù</span>
+            <div class="sidebar-close" onclick="closeSidebar()">✕</div>
+        </div>
+        <div class="sidebar-content">
+            <div class="form-group">
+                <div class="label-header"><label>Registrazione Utente</label></div>
+                <p class="reg-info-text">Imposta qui il tuo nome. Verrà aggiunto al database e selezionato in automatico come operatore su questo dispositivo.</p>
+                <input type="text" id="nome-registrazione" placeholder="Es: Mario R.">
+                <button class="btn-save" onclick="registraUtente()" style="padding:10px; font-size:16px;">Registrati</button>
+            </div>
+            <div id="reg-status" style="margin-top:15px; font-size:14px; color:var(--accent-pink); display:none; background:var(--primary-pink); padding:10px; border-radius:10px;">
+                Utente attivo sul dispositivo:
+                <select id="reg-name-select" onchange="selezionaOperatoreDefault(this.value)" style="margin-top:8px; padding:10px; font-size:16px; font-weight:bold; border:1px solid var(--accent-pink); border-radius:10px; background:white; color:var(--dark-text);"></select>
+            </div>
+        </div>
+    </div>
+
+    <!-- DIALOG CUSTOM -->
+    <div id="custom-dialog" class="custom-dialog-overlay">
+        <div class="custom-dialog-box">
+            <h3 class="custom-dialog-title" id="dialog-title">Cat dice</h3>
+            <div class="custom-dialog-message" id="dialog-message"></div>
+            <input type="text" id="dialog-input" class="custom-dialog-input" placeholder="Scrivi qui...">
+            <div class="custom-dialog-buttons">
+                <button class="custom-btn-cancel" onclick="closeCustomDialog(false)">Annulla</button>
+                <button class="custom-btn-ok" onclick="closeCustomDialog(true)">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOADER -->
     <div id="loader" class="loader-container">
         <svg class="archaeo-icon" viewBox="0 0 64 64">
             <path d="M15 15 L48 12 L52 45 L40 55 L12 50 L10 28 Z" opacity="0.3" fill="none" stroke-width="2.5"/>
             <path d="M30 13 L33 22 L28 32" opacity="0.2" /> 
-            
+
             <text font-size="2.8" fill="var(--accent-pink)" opacity="0.8" 
                   x="32" text-anchor="middle"
                   style="font-family: serif; letter-spacing: 0.5px; stroke: none; font-weight: 100;">
@@ -158,45 +242,51 @@
 
             <circle class="dust-particle" cx="30" cy="18" r="1.2" />
             <circle class="dust-particle" cx="42" cy="22" r="0.8" style="animation-delay: 0.3s;"/>
-
             <g class="brush-anim">
                 <rect x="30" y="2" width="4" height="18" rx="1" fill="var(--accent-pink)" /> 
                 <path d="M26 20 L38 20 L42 35 L22 35 Z" fill="var(--bg-color)" stroke-width="2" />
             </g>
         </svg>
-        <div id="loader-text" style="margin-top: 15px; color: var(--accent-pink); font-weight: bold; font-size: 16px; letter-spacing: 1px;">ANALISI REPERTI...</div>
+        <div id="loader-text" style="margin-top: 15px; color: var(--accent-pink); font-weight: bold; font-size: 16px; letter-spacing: 1px;">CARICAMENTO...</div>
     </div>
 
     <div id="toast">Messaggio</div>
 
+    <!-- HEADER -->
     <div class="header-container">
-        <input type="text" id="search-input" class="search-bar" placeholder="Cerca US..." oninput="cercaUS(this.value)">
-        <div class="back-container" style="margin-top: 15px;">
+        <div class="top-bar">
+            <button class="hamburger-btn" onclick="openSidebar()">☰</button>
             <div id="back-arrow" class="back-btn" onclick="goBack()">←</div>
-            <div id="breadcrumb" class="breadcrumb">Home</div>
+        </div>
+        <div id="breadcrumb" class="breadcrumb">Home</div>
+        <input type="text" id="search-input" class="search-bar" placeholder="Cerca per Numero US..." oninput="cercaUS(this.value)">
+        <div id="search-filters" style="display:flex; gap:8px; margin-top:8px;">
+            <div class="filter-pill active" data-filter="US" onclick="setSearchFilter('US')">🔢 US</div>
+            <div class="filter-pill" data-filter="PAROLA" onclick="setSearchFilter('PAROLA')">🔤 Parola</div>
         </div>
     </div>
 
     <div id="main-grid" class="grid-container"></div>
-    <div id="add-button" class="fab" onclick="handleFabClick()">+</div>
 
+    <!-- MODALE SCHEDA US -->
     <div id="form-modal" class="modal-overlay" onclick="handleOverlayClick(event)">
         <div class="modal-content" id="modal-content">
             <div class="drag-handle"></div>
             <h2 style="text-align:center; color: var(--accent-pink); margin-top:0;">Scheda US</h2>
             
             <div class="form-group">
-                <label>Contesto</label>
+                <div class="label-header"><label>Contesto</label></div>
                 <input type="text" id="form-context" readonly>
             </div>
 
             <div class="form-group">
-                <label>Numero US</label>
-                <input type="number" id="num_us" placeholder="Es: 100">
+                <div class="label-header"><label>Numero US</label></div>
+                <input type="number" id="num_us" placeholder="Es: 100" required oninput="validaNumUS(true)">
+                <div id="num_us_error" style="display:none; font-size:12px; color:#ff5252; margin-top:4px;"></div>
             </div>
 
             <div class="form-group">
-                <label>Tipo US</label>
+                <div class="label-header"><label>Tipo US</label></div>
                 <select id="tipo_us">
                     <option value="piano">Piano</option>
                     <option value="taglio">Taglio</option>
@@ -207,20 +297,28 @@
             </div>
 
             <div class="form-group">
-                <label>Operatore</label>
-                <select id="operatore">
-                    <option value="Archeologo 1">Archeologo 1</option>
-                    <option value="Archeologo 2">Archeologo 2</option>
-                </select>
+                <div class="label-header"><label>Operatore</label></div>
+                <select id="operatore"></select>
             </div>
 
+            <!-- NUOVI CAMPI: QUOTE -->
             <div class="form-group">
-                <label>Foto</label>
-                <input type="file" id="file_foto" accept="image/*" style="margin-top: 5px;">
-                <img id="preview_foto" src="" style="width: 100%; margin-top: 10px; border-radius: 12px; display: none; border: 1px solid var(--primary-pink); object-fit: contain;">
+                <div class="label-header"><label>Quote</label></div>
+                <div class="grid-2">
+                    <input type="number" id="quota_sup" step="any" placeholder="Superiore (es. 15.20)">
+                    <input type="number" id="quota_inf" step="any" placeholder="Inferiore (es. 14.85)">
+                </div>
             </div>
 
-            <label>Rapporti Stratigrafici</label>
+            <!-- UPLOAD FILE (Nessun filtro accept = apre Fotocamera, Galleria o File) -->
+            <div class="form-group">
+                <div class="label-header"><label>Media / Documenti (Foto, Video, ecc.)</label></div>
+                <input type="file" id="file_foto" style="margin-top: 5px;">
+                <img id="preview_foto" src="" style="width: 100%; margin-top: 10px; border-radius: 12px; display: none; border: 1px solid var(--primary-pink); object-fit: contain;">
+                <div id="file_name_display" style="font-size: 12px; color: gray; margin-top: 5px; display: none;"></div>
+            </div>
+
+            <div class="label-header"><label>Rapporti Stratigrafici</label></div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px;">
                 <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('Copre')">Copre</button>
                 <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('È coperto da')">Coperto da</button>
@@ -231,13 +329,21 @@
             </div>
             <div id="chips-area" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:10px;"></div>
 
+            <!-- DESCRIZIONE CON DETTATURA -->
             <div class="form-group" style="margin-top:15px;">
-                <label>Descrizione</label>
+                <div class="label-header">
+                    <label>Descrizione</label>
+                    <button type="button" class="mic-btn" onclick="startDictation('descrizione', this)" title="Dettatura vocale">🎤</button>
+                </div>
                 <textarea id="descrizione" rows="3"></textarea>
             </div>
 
+            <!-- INTERPRETAZIONE CON DETTATURA -->
             <div class="form-group">
-                <label>Interpretazione</label>
+                <div class="label-header">
+                    <label>Interpretazione</label>
+                    <button type="button" class="mic-btn" onclick="startDictation('interpretazione', this)" title="Dettatura vocale">🎤</button>
+                </div>
                 <textarea id="interpretazione" rows="3"></textarea>
             </div>
 
@@ -254,13 +360,62 @@
         let path = { scavo: "", cantiere: "", quadrante: "" };
         let rapportiDati = [];
         let databaseLocale = [];
+        let operatoriList = [];
 
         const grid = document.getElementById('main-grid');
         const breadcrumb = document.getElementById('breadcrumb');
-        const addButton = document.getElementById('add-button');
         const modal = document.getElementById('form-modal');
         const modalContent = document.getElementById('modal-content');
         const chipsArea = document.getElementById('chips-area');
+
+        /* INIZIALIZZAZIONE DETTATURA VOCALE */
+        let speechRecognition;
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            speechRecognition = new SpeechRec();
+            speechRecognition.lang = 'it-IT';
+            speechRecognition.continuous = false; 
+            speechRecognition.interimResults = false;
+        }
+
+        let isListening = false;
+        function startDictation(fieldId, btnElement) {
+            if (!speechRecognition) {
+                showToast("Dettatura vocale non supportata da questo browser (usa Chrome o Safari).");
+                return;
+            }
+
+            // Se sta già registrando, il secondo click ferma la registrazione
+            if (isListening) {
+                speechRecognition.stop();
+                return;
+            }
+            
+            speechRecognition.onstart = function() {
+                isListening = true;
+                btnElement.innerText = "🔴";
+                showToast("In ascolto...");
+            };
+            
+            speechRecognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                const field = document.getElementById(fieldId);
+                field.value += (field.value.length > 0 && !field.value.endsWith(' ') ? " " : "") + transcript;
+            };
+            
+            speechRecognition.onend = function() {
+                isListening = false;
+                btnElement.innerText = "🎤";
+            };
+            
+            speechRecognition.onerror = function(event) {
+                showToast("Errore dettatura.");
+                isListening = false;
+                btnElement.innerText = "🎤";
+            };
+            
+            speechRecognition.start();
+        }
 
         function showToast(msg) {
             const t = document.getElementById('toast');
@@ -268,73 +423,132 @@
             setTimeout(() => t.classList.remove('show'), 3000);
         }
 
-        // --- GESTIONE SWIPE RESISTENTE ---
-        let touchStartY = 0;
-        let isDragging = false;
+        function openSidebar() {
+            document.getElementById('sidebar-overlay').style.display = 'block';
+            setTimeout(() => { document.getElementById('sidebar-overlay').style.opacity = '1'; document.getElementById('sidebar').style.left = '0'; }, 10);
+            const savedName = localStorage.getItem('defaultOperatore');
+            if(savedName) document.getElementById('nome-registrazione').value = savedName;
+            popolaSelectUtenteAttivo();
+        }
 
-        modalContent.addEventListener('touchstart', e => {
-            touchStartY = e.touches[0].clientY;
-            isDragging = false;
-        }, {passive: true});
+        function popolaSelectUtenteAttivo() {
+            const sel = document.getElementById('reg-name-select');
+            const regStatus = document.getElementById('reg-status');
+            if(operatoriList.length === 0) { regStatus.style.display = 'none'; return; }
+            sel.innerHTML = "";
+            operatoriList.forEach(op => { const opt = document.createElement('option'); opt.value = op; opt.innerText = op; sel.appendChild(opt); });
+            const defaultOp = localStorage.getItem('defaultOperatore');
+            if(defaultOp && operatoriList.includes(defaultOp)) sel.value = defaultOp;
+            regStatus.style.display = 'block';
+        }
 
-        modalContent.addEventListener('touchmove', e => {
-            const touchY = e.touches[0].clientY;
-            const diff = touchY - touchStartY;
-            if (diff > 0 && modalContent.scrollTop <= 0) {
-                isDragging = true;
-                e.preventDefault();
-                modalContent.style.transform = `translateY(${diff * 0.4}px)`;
-                modalContent.style.transition = 'none';
+        function selezionaOperatoreDefault(nome) {
+            localStorage.setItem('defaultOperatore', nome);
+            updateOperatoriDropdown();
+            showToast("Utente predefinito: " + nome);
+        }
+        
+        function closeSidebar() {
+            document.getElementById('sidebar').style.left = '-300px';
+            document.getElementById('sidebar-overlay').style.opacity = '0';
+            setTimeout(() => { document.getElementById('sidebar-overlay').style.display = 'none'; }, 300);
+        }
+
+        async function registraUtente() {
+            const nome = document.getElementById('nome-registrazione').value.trim();
+            if(!nome) { showToast("Inserisci un nome o una sigla!"); return; }
+            localStorage.setItem('defaultOperatore', nome);
+            if(!operatoriList.includes(nome)) operatoriList.push(nome);
+            popolaSelectUtenteAttivo();
+            updateOperatoriDropdown(nome);
+            showToast("Nome impostato sul dispositivo!");
+            try { fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "REGISTER_USER", nome: nome }) }); } catch(e) {}
+            setTimeout(() => closeSidebar(), 1500);
+        }
+
+        function updateOperatoriDropdown(nuovoNome = null) {
+            const select = document.getElementById('operatore');
+            if(nuovoNome && !operatoriList.includes(nuovoNome)) operatoriList.push(nuovoNome);
+            if(operatoriList.length === 0) operatoriList = ["Archeologo 1", "Archeologo 2"];
+            select.innerHTML = "";
+            operatoriList.forEach(op => { const opt = document.createElement('option'); opt.value = op; opt.innerText = op; select.appendChild(opt); });
+            const defaultOp = localStorage.getItem('defaultOperatore');
+            if(defaultOp && operatoriList.includes(defaultOp)) select.value = defaultOp;
+        }
+
+        let dialogResolve = null;
+        function showCustomDialog(type, message, title = "Cat dice") {
+            return new Promise((resolve) => {
+                dialogResolve = resolve; document.getElementById('dialog-title').innerText = title; document.getElementById('dialog-message').innerHTML = message;
+                const inputField = document.getElementById('dialog-input');
+                if (type === 'prompt') { inputField.style.display = 'block'; inputField.value = ''; setTimeout(() => inputField.focus(), 100); } else { inputField.style.display = 'none'; }
+                document.getElementById('custom-dialog').style.display = 'flex';
+            });
+        }
+
+        function closeCustomDialog(isConfirm) {
+            document.getElementById('custom-dialog').style.display = 'none';
+            if (dialogResolve) {
+                const inputField = document.getElementById('dialog-input');
+                if (inputField.style.display === 'block') dialogResolve(isConfirm ? inputField.value.trim() : null); else dialogResolve(isConfirm);
+                dialogResolve = null;
             }
-        }, {passive: false});
+        }
+        document.getElementById('dialog-input').addEventListener('keypress', function (e) { if (e.key === 'Enter') closeCustomDialog(true); });
+        function customConfirm(message) { return showCustomDialog('confirm', message); }
+        function customPrompt(message) { return showCustomDialog('prompt', message); }
 
+        let touchStartY = 0; let isDragging = false;
+        modalContent.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; isDragging = false; }, {passive: true});
+        modalContent.addEventListener('touchmove', e => {
+            const touchY = e.touches[0].clientY; const diff = touchY - touchStartY;
+            if (diff > 0 && modalContent.scrollTop <= 0) { isDragging = true; e.preventDefault(); modalContent.style.transform = `translateY(${diff * 0.4}px)`; modalContent.style.transition = 'none'; }
+        }, {passive: false});
         modalContent.addEventListener('touchend', e => {
             if (!isDragging) return;
             const diff = e.changedTouches[0].clientY - touchStartY;
             modalContent.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
-            if (diff > 200) closeModal();
-            else modalContent.style.transform = `translateY(0)`;
+            if (diff > 200) closeModal(); else modalContent.style.transform = `translateY(0)`;
             isDragging = false;
         });
-
         function handleOverlayClick(e) { if(e.target === modal) closeModal(); }
 
+        /* GESTIONE ANTEPRIMA FILE */
         document.getElementById('file_foto').addEventListener('change', function(e) {
             const file = e.target.files[0];
             const preview = document.getElementById('preview_foto');
-            if (file) { preview.src = URL.createObjectURL(file); preview.style.display = 'block'; }
+            const fileDisplay = document.getElementById('file_name_display');
+            
+            if (file) { 
+                fileDisplay.innerText = "File selezionato: " + file.name;
+                fileDisplay.style.display = 'block';
+                if(file.type.startsWith('image/')) {
+                    preview.src = URL.createObjectURL(file); 
+                    preview.style.display = 'block'; 
+                } else {
+                    preview.style.display = 'none';
+                }
+            } else {
+                fileDisplay.style.display = 'none';
+                preview.style.display = 'none';
+            }
         });
 
         async function caricaDatiDalDatabase(isSearchReturn = false) {
-            document.getElementById('loader-text').innerText = "SINCRONIZZAZIONE...";
             document.getElementById('loader').style.display = 'flex';
             try {
-                const response = await fetch(SCRIPT_URL);
-                const data = await response.json();
-                databaseLocale = data.us || [];
-                if (data.strutturaObj) dataStruttura = data.strutturaObj;
-                if (!isSearchReturn) render();
-                else {
-                    currentLevel = "US_LIST";
-                    document.getElementById('search-input').value = "";
-                    render();
-                }
-            } catch (e) { showToast("Errore connessione"); }
-            finally { document.getElementById('loader').style.display = 'none'; }
+                const response = await fetch(SCRIPT_URL); const data = await response.json();
+                databaseLocale = data.us || []; if (data.strutturaObj) dataStruttura = data.strutturaObj;
+                if (data.utenti) operatoriList = data.utenti; updateOperatoriDropdown();
+                if (!isSearchReturn) render(); else { currentLevel = "US_LIST"; document.getElementById('search-input').value = ""; render(); }
+            } catch (e) { showToast("Errore connessione"); } finally { document.getElementById('loader').style.display = 'none'; }
         }
 
         function navTo(level, name = "") {
             document.getElementById('search-input').value = ""; 
-            if (level === 'HOME') {
-                path.scavo = ""; path.cantiere = ""; path.quadrante = "";
-                currentLevel = "HOME";
-            } else if (level === 'CANTIERE') {
-                path.scavo = name; path.cantiere = ""; path.quadrante = "";
-                currentLevel = "CANTIERE";
-            } else if (level === 'QUADRANTE') {
-                path.cantiere = name; path.quadrante = "";
-                currentLevel = "QUADRANTE";
-            }
+            if (level === 'HOME') { path.scavo = ""; path.cantiere = ""; path.quadrante = ""; currentLevel = "HOME"; } 
+            else if (level === 'CANTIERE') { path.scavo = name; path.cantiere = ""; path.quadrante = ""; currentLevel = "CANTIERE"; } 
+            else if (level === 'QUADRANTE') { path.cantiere = name; path.quadrante = ""; currentLevel = "QUADRANTE"; }
             render();
         }
 
@@ -345,30 +559,29 @@
         }
 
         function render() {
-            grid.innerHTML = ""; addButton.style.display = "flex"; 
-            const backArrow = document.getElementById('back-arrow');
-            
-            let bcText = "Home";
-            if (currentLevel === "HOME") backArrow.style.display = "none";
-            else {
-                backArrow.style.display = "flex";
-                if (path.scavo) bcText = path.scavo;
-                if (path.cantiere) bcText += ` > ${path.cantiere}`;
-                if (path.quadrante && currentLevel === "US_LIST") bcText += ` > <b>${path.quadrante}</b>`;
+            grid.innerHTML = ""; const backArrow = document.getElementById('back-arrow'); let bcText = "Home";
+            if (currentLevel === "HOME") { backArrow.style.display = "none"; } else {
+                backArrow.style.display = "flex"; if (path.scavo) bcText = path.scavo;
+                if (path.cantiere) bcText += ` > ${path.cantiere}`; if (path.quadrante && currentLevel === "US_LIST") bcText += ` > <b>${path.quadrante}</b>`;
             }
             breadcrumb.innerHTML = bcText;
 
+            const addBox = document.createElement('div'); addBox.className = 'box-add';
             if (currentLevel === "HOME") {
+                addBox.innerHTML = `<div class='box-add-icon'>+</div>Aggiungi Scavo`; addBox.onclick = handleFabClick; grid.appendChild(addBox);
                 Object.keys(dataStruttura).forEach(s => createBox(s, "🏗️", () => navTo('CANTIERE', s)));
             } else if (currentLevel === "CANTIERE") {
-                const cantieri = dataStruttura[path.scavo] || {};
-                Object.keys(cantieri).forEach(c => createBox(c, "🚧", () => navTo('QUADRANTE', c)));
+                addBox.innerHTML = `<div class='box-add-icon'>+</div>Aggiungi Cantiere`; addBox.onclick = handleFabClick; grid.appendChild(addBox);
+                const cantieri = dataStruttura[path.scavo] || {}; Object.keys(cantieri).forEach(c => createBox(c, "🚧", () => navTo('QUADRANTE', c)));
             } else if (currentLevel === "QUADRANTE") {
+                addBox.innerHTML = `<div class='box-add-icon'>+</div>Aggiungi Quadrante`; addBox.onclick = handleFabClick; grid.appendChild(addBox);
                 const quadranti = (dataStruttura[path.scavo] && dataStruttura[path.scavo][path.cantiere]) ? dataStruttura[path.scavo][path.cantiere] : [];
                 quadranti.forEach(q => createBox(q, "🟦", () => { path.quadrante = q; currentLevel = "US_LIST"; render(); }));
             } else if (currentLevel === "US_LIST") {
+                addBox.style.height = "50px"; addBox.style.minHeight = "50px"; addBox.style.flexDirection = "row"; addBox.style.gap = "10px";
+                addBox.innerHTML = `<div style="font-size:24px; font-weight:normal;">+</div><div>Aggiungi US</div>`; addBox.onclick = () => openForm(); grid.appendChild(addBox);
                 const filtrat = databaseLocale.filter(u => u.Scavo == path.scavo && u.Cantiere == path.cantiere && u.Quadrante == path.quadrante);
-                if(filtrat.length === 0) grid.innerHTML = "<p style='grid-column:1/-1;text-align:center;color:gray;'>Nessuna US. Clicca +</p>";
+                if(filtrat.length === 0) { const emptyMsg = document.createElement('p'); emptyMsg.style.gridColumn = "1/-1"; emptyMsg.style.textAlign = "center"; emptyMsg.style.color = "gray"; emptyMsg.innerText = "Nessuna US inserita."; grid.appendChild(emptyMsg); }
                 filtrat.forEach(us => {
                     const div = document.createElement('div'); div.className = 'box'; div.style.height="50px"; div.style.flexDirection="row"; div.style.justifyContent="space-between"; div.style.border="1px dashed var(--accent-pink)";
                     div.innerHTML = `<div class='delete-btn' onclick='event.stopPropagation(); eliminaUS("${us.Numero_US}")'>✕</div><div style='display:flex;align-items:center;gap:10px'><span style='font-size:10px;color:var(--accent-pink);font-weight:bold'>US</span><b>${us.Numero_US}</b></div><small style='color:gray'>${us.Tipo_US}</small>`;
@@ -378,89 +591,70 @@
         }
 
         function createBox(text, icon, onClick) {
-            const div = document.createElement('div'); div.className = 'box';
-            const safeText = text.replace(/'/g, "\\'");
+            const div = document.createElement('div'); div.className = 'box'; const safeText = text.replace(/'/g, "\\'");
             div.innerHTML = `<div class='delete-btn' onclick='event.stopPropagation(); deleteItem(\`${safeText}\`)'>✕</div><div class='box-icon'>${icon}</div>${text}`;
             div.onclick = onClick; grid.appendChild(div);
         }
 
+        let searchFilter = 'US';
+        function setSearchFilter(f) {
+            searchFilter = f;
+            document.querySelectorAll('.filter-pill').forEach(p => p.classList.toggle('active', p.dataset.filter === f));
+            const input = document.getElementById('search-input');
+            input.placeholder = f === 'US' ? 'Cerca per Numero US...' : 'Cerca parola in descrizione/interpretazione...';
+            cercaUS(input.value);
+        }
+
         function cercaUS(q) {
-            q = q.trim().toLowerCase(); if(!q) { render(); return; }
-            addButton.style.display = "none"; 
-            breadcrumb.innerHTML = `<span>Risultati per: "${q}"</span>`; 
-            grid.innerHTML = "";
-            databaseLocale.filter(u => String(u.Numero_US).includes(q)).forEach(us => {
+            q = q.trim().toLowerCase(); if(!q) { render(); return; } grid.innerHTML = "";
+            let risultati = [];
+            if(searchFilter === 'US') {
+                breadcrumb.innerHTML = `<span>Risultati US per: "${q}"</span>`;
+                risultati = databaseLocale.filter(u => String(u.Numero_US).toLowerCase().includes(q));
+            } else {
+                breadcrumb.innerHTML = `<span>Risultati parola "${q}" in Descrizione/Interpretazione</span>`;
+                risultati = databaseLocale.filter(u => String(u.Descrizione || "").toLowerCase().includes(q) || String(u.Interpretazione || "").toLowerCase().includes(q));
+            }
+            if(risultati.length === 0) { const emptyMsg = document.createElement('p'); emptyMsg.style.gridColumn = "1/-1"; emptyMsg.style.textAlign = "center"; emptyMsg.style.color = "gray"; emptyMsg.innerText = "Nessun risultato."; grid.appendChild(emptyMsg); return; }
+            risultati.forEach(us => {
                 const div = document.createElement('div'); div.className = 'box'; div.style.minHeight="60px"; div.style.alignItems="flex-start";
                 div.innerHTML = `<div class='delete-btn' onclick='event.stopPropagation(); eliminaUS("${us.Numero_US}")'>✕</div><div style='width:100%; display:flex; justify-content:space-between; padding-left:10px;'><b>US ${us.Numero_US}</b><small>${us.Tipo_US}</small></div><div style='font-size:10px; color:var(--accent-pink); padding-left:10px;'>📍 ${us.Scavo} | ${us.Cantiere} | ${us.Quadrante}</div>`;
                 div.onclick = () => { path.scavo = us.Scavo; path.cantiere = us.Cantiere; path.quadrante = us.Quadrante; openForm(us, true); }; grid.appendChild(div);
             });
         }
 
-        function handleFabClick() {
-            if (currentLevel === "US_LIST") { openForm(); return; }
-            const nuovo = prompt("Inserisci nome:"); if (!nuovo) return;
-            if (currentLevel === "HOME") dataStruttura[nuovo] = {};
-            else if (currentLevel === "CANTIERE") dataStruttura[path.scavo][nuovo] = [];
-            else if (currentLevel === "QUADRANTE") dataStruttura[path.scavo][path.cantiere].push(nuovo);
-            render(); 
-            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "SAVE_STRUTTURA", struttura: dataStruttura }) });
-            showToast("Aggiunto!");
+        async function handleFabClick() {
+            let entita = "Scavo"; if(currentLevel === "CANTIERE") entita = "Cantiere"; if(currentLevel === "QUADRANTE") entita = "Quadrante";
+            const nuovo = await customPrompt(`Inserisci nome del nuovo <b>${entita}</b>:`); if (!nuovo) return;
+            if (currentLevel === "HOME") dataStruttura[nuovo] = {}; else if (currentLevel === "CANTIERE") dataStruttura[path.scavo][nuovo] = []; else if (currentLevel === "QUADRANTE") dataStruttura[path.scavo][path.cantiere].push(nuovo);
+            render(); fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "SAVE_STRUTTURA", struttura: dataStruttura }) }); showToast("Aggiunto!");
         }
 
-        function deleteItem(i) {
-            if(!confirm(`Vuoi davvero eliminare ${i} e TUTTE le US contenute al suo interno?`)) return;
-
+        async function deleteItem(i) {
+            const confermato = await customConfirm(`Vuoi davvero eliminare <b>${i}</b> e TUTTE le US contenute al suo interno?`); if(!confermato) return;
             let usDaEliminare = [];
-
-            // Identifica le US da eliminare in base al livello in cui ci troviamo
-            if(currentLevel === "HOME") {
-                usDaEliminare = databaseLocale.filter(us => us.Scavo === i);
-                delete dataStruttura[i];
-            }
-            else if(currentLevel === "CANTIERE") {
-                usDaEliminare = databaseLocale.filter(us => us.Scavo === path.scavo && us.Cantiere === i);
-                delete dataStruttura[path.scavo][i];
-            }
-            else if(currentLevel === "QUADRANTE") {
-                usDaEliminare = databaseLocale.filter(us => us.Scavo === path.scavo && us.Cantiere === path.cantiere && us.Quadrante === i);
-                dataStruttura[path.scavo][path.cantiere] = dataStruttura[path.scavo][path.cantiere].filter(q => q !== i);
-            }
-
-            render(); 
-            
-            // 1. Salva la nuova struttura (senza la cartella)
-            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "SAVE_STRUTTURA", struttura: dataStruttura }) });
-
-            // 2. Manda il comando di eliminazione al server per ogni US trovata
-            usDaEliminare.forEach(us => {
-                fetch(SCRIPT_URL, { 
-                    method: 'POST', 
-                    mode: 'no-cors', 
-                    body: JSON.stringify({ action: "DELETE_US", scavo: us.Scavo, cantiere: us.Cantiere, quadrante: us.Quadrante, numero_us: us.Numero_US }) 
-                });
-            });
-
-            // 3. Rimuovi le US eliminate dal database locale (così non compaiono più nella barra di ricerca)
-            databaseLocale = databaseLocale.filter(us => !usDaEliminare.includes(us));
-
-            showToast(`Cartella e ${usDaEliminare.length} US eliminate!`);
+            if(currentLevel === "HOME") { usDaEliminare = databaseLocale.filter(us => us.Scavo === i); delete dataStruttura[i]; }
+            else if(currentLevel === "CANTIERE") { usDaEliminare = databaseLocale.filter(us => us.Scavo === path.scavo && us.Cantiere === i); delete dataStruttura[path.scavo][i]; }
+            else if(currentLevel === "QUADRANTE") { usDaEliminare = databaseLocale.filter(us => us.Scavo === path.scavo && us.Cantiere === path.cantiere && us.Quadrante === i); dataStruttura[path.scavo][path.cantiere] = dataStruttura[path.scavo][path.cantiere].filter(q => q !== i); }
+            render(); fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "SAVE_STRUTTURA", struttura: dataStruttura }) });
+            usDaEliminare.forEach(us => { fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "DELETE_US", scavo: us.Scavo, cantiere: us.Cantiere, quadrante: us.Quadrante, numero_us: us.Numero_US }) }); });
+            databaseLocale = databaseLocale.filter(us => !usDaEliminare.includes(us)); showToast(`Cartella e ${usDaEliminare.length} US eliminate!`);
         }
 
-        function eliminaUS(numero_us) {
-            if(!confirm(`Vuoi davvero eliminare l'US ${numero_us}?`)) return;
-            databaseLocale = databaseLocale.filter(us => String(us.Numero_US) !== String(numero_us));
-            render();
+        async function eliminaUS(numero_us) {
+            const confermato = await customConfirm(`Vuoi davvero eliminare l'US <b>${numero_us}</b>?`); if(!confermato) return;
+            databaseLocale = databaseLocale.filter(us => String(us.Numero_US) !== String(numero_us)); render();
             fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "DELETE_US", scavo: path.scavo, cantiere: path.cantiere, quadrante: path.quadrante, numero_us: numero_us }) })
             .then(() => { showToast("US eliminata"); caricaDatiDalDatabase(); });
         }
 
         let isFromSearch = false;
         function openForm(d = null, fromSearch = false) {
-            isFromSearch = fromSearch;
-            document.getElementById('form-context').value = `${path.scavo} | ${path.cantiere} | ${path.quadrante}`;
-            const preview = document.getElementById('preview_foto');
-            const saveBtnText = document.getElementById('save-btn-text');
+            isFromSearch = fromSearch; document.getElementById('form-context').value = `${path.scavo} | ${path.cantiere} | ${path.quadrante}`;
+            const preview = document.getElementById('preview_foto'); const saveBtnText = document.getElementById('save-btn-text'); const operatoreSelect = document.getElementById('operatore');
+            document.getElementById('file_name_display').style.display = 'none';
             rapportiDati = [];
+            
             if(d) {
                 const map = { "Copre": d.Copre, "È coperto da": d.Coperto_da, "Taglia": d.Taglia, "È tagliato da": d.Tagliato_da, "Riempie": d.Riempie, "È riempito da": d.Riempito_da };
                 Object.keys(map).forEach(t => { if(map[t]) map[t].toString().split(',').forEach(n => { if(n.trim()) rapportiDati.push({id: Math.random(), tipo: t, num: n.trim()}); })});
@@ -468,45 +662,77 @@
                 document.getElementById('tipo_us').value = (d.Tipo_US || "piano").toLowerCase();
                 document.getElementById('descrizione').value = d.Descrizione || "";
                 document.getElementById('interpretazione').value = d.Interpretazione || "";
-                let url = d.Link || d.link || d.LINK || d.URL || "";
+                
+                // Quote (mappa le chiavi come arrivano dal JSON del server)
+                document.getElementById('quota_sup').value = d.Quota_Sup || d["Quota Sup"] || "";
+                document.getElementById('quota_inf').value = d.Quota_Inf || d["Quota Inf"] || "";
+                
+                if(d.Operatore) operatoreSelect.value = d.Operatore;
+                let url = d.Link || d.link || d.LINK || d.URL || d.FileUrl || "";
                 if(url && url.length > 10) {
-                    if(url.includes("drive.google.com")) {
-                        const idMatch = url.match(/[-\w]{25,}/);
-                        if(idMatch) url = `https://drive.google.com/thumbnail?id=${idMatch[0]}&sz=w1000`;
-                    }
+                    if(url.includes("drive.google.com")) { const idMatch = url.match(/[-\w]{25,}/); if(idMatch) url = `https://drive.google.com/thumbnail?id=${idMatch[0]}&sz=w1000`; }
                     preview.src = url; preview.style.display = 'block'; preview.style.minHeight = '200px';
                 } else { preview.style.display = 'none'; }
                 saveBtnText.innerText = "AGGIORNA DATI";
             } else {
                 document.getElementById('num_us').value = ""; document.getElementById('descrizione').value = ""; document.getElementById('interpretazione').value = "";
+                document.getElementById('quota_sup').value = ""; document.getElementById('quota_inf').value = "";
+                const defaultOp = localStorage.getItem('defaultOperatore'); if(defaultOp) operatoreSelect.value = defaultOp;
                 preview.style.display = 'none'; saveBtnText.innerText = "INVIA DATI";
             }
-            document.getElementById('file_foto').value = ""; renderChips();
+            numUSInModifica = d ? String(d.Numero_US) : null;
+            document.getElementById('file_foto').value = ""; renderChips(); validaNumUS(true);
             modal.style.display = 'flex'; modalContent.style.transform = 'translateY(0)';
         }
 
+        /* VALIDAZIONE NUMERO US (obbligatorio e univoco nello stesso scavo) */
+        let numUSInModifica = null;
+        function stessoNumUS(a, b) {
+            a = String(a).trim(); b = String(b).trim();
+            return a !== "" && b !== "" && (a === b || (!isNaN(a) && !isNaN(b) && Number(a) === Number(b)));
+        }
+        function validaNumUS(live = false) {
+            const input = document.getElementById('num_us');
+            const err = document.getElementById('num_us_error');
+            const val = input.value.trim();
+            let msg = "";
+            if (!val) {
+                if (!live) msg = "Numero US obbligatorio";
+            } else if (!(numUSInModifica !== null && stessoNumUS(numUSInModifica, val))) {
+                const esiste = databaseLocale.some(u => u.Scavo == path.scavo && stessoNumUS(u.Numero_US, val));
+                if (esiste) msg = "US già presente";
+            }
+            err.innerText = msg;
+            err.style.display = msg ? 'block' : 'none';
+            input.style.borderColor = msg ? '#ff5252' : '';
+            return !msg && val !== "";
+        }
+
         function closeModal() { modalContent.style.transform = 'translateY(100%)'; setTimeout(() => modal.style.display = 'none', 300); }
-        function addRapporto(t) { const n = prompt(`US che ${t}:`); if(n) { rapportiDati.push({id: Date.now(), tipo: t, num: n}); renderChips(); } }
+        async function addRapporto(t) { const n = await customPrompt(`Inserisci il numero dell'US che <b>${t}</b>:`); if(n) { rapportiDati.push({id: Date.now(), tipo: t, num: n}); renderChips(); } }
         function renderChips() { chipsArea.innerHTML = ""; rapportiDati.forEach(r => { const c = document.createElement('div'); c.style="background:var(--primary-pink);padding:5px 10px;border-radius:15px;font-size:11px"; c.innerHTML = `${r.tipo}: ${r.num} <b onclick="removeRapporto(${r.id})" style="color:red;margin-left:5px">✕</b>`; chipsArea.appendChild(c); }); }
         function removeRapporto(id) { rapportiDati = rapportiDati.filter(r => r.id !== id); renderChips(); }
-
         const toB64 = f => new Promise((res, rej) => { const r = new FileReader(); r.readAsDataURL(f); r.onload = () => res(r.result); r.onerror = e => rej(e); });
 
         async function salvaDati() {
-            document.getElementById('loader-text').innerText = "ARCHIVIAZIONE US...";
+            if (!validaNumUS()) { document.getElementById('num_us').focus(); return; }
             document.getElementById('loader').style.display = 'flex';
             const btn = document.getElementById('save-btn-text'); btn.innerText = "Invio..."; btn.disabled = true;
             let fileObj = null; const fInput = document.getElementById('file_foto');
+            
             if(fInput.files.length > 0) {
                 const f = fInput.files[0]; const b64 = await toB64(f);
-                fileObj = { base64: b64.split(',')[1], type: f.type };
+                fileObj = { base64: b64.split(',')[1], type: f.type, name: f.name };
             }
+            
             const p = {
                 action: "SAVE_US", scavo: path.scavo, cantiere: path.cantiere, quadrante: path.quadrante,
                 numero_us: document.getElementById('num_us').value, tipo_us: document.getElementById('tipo_us').value,
                 operatore: document.getElementById('operatore').value, fotoFile: fileObj, rapporti: rapportiDati,
-                descrizione: document.getElementById('descrizione').value, interpretazione: document.getElementById('interpretazione').value
+                descrizione: document.getElementById('descrizione').value, interpretazione: document.getElementById('interpretazione').value,
+                quota_sup: document.getElementById('quota_sup').value, quota_inf: document.getElementById('quota_inf').value
             };
+            
             fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(p) })
             .then(() => { showToast("US Salvata!"); btn.disabled = false; closeModal(); caricaDatiDalDatabase(isFromSearch); })
             .catch(() => { showToast("Errore!"); btn.disabled = false; document.getElementById('loader').style.display = 'none'; });
