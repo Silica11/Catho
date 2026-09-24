@@ -13,7 +13,6 @@
             --bg-color: #fff5f8;
         }
 
-        /* Impedisce il ricaricamento trascinando verso il basso */
         html, body { 
             overscroll-behavior-y: contain; 
             overflow: hidden;
@@ -32,7 +31,6 @@
             overflow-y: auto;
         }
 
-        /* BARRA SUPERIORE */
         .header-container { width: 100%; max-width: 500px; margin-bottom: 20px; }
         
         .top-bar {
@@ -40,10 +38,19 @@
             justify-content: flex-start;
             align-items: center;
             margin-bottom: 15px;
+            gap: 10px;
+        }
+
+        /* MENU HAMBURGER */
+        .hamburger-btn {
+            background: none; border: none; color: var(--accent-pink);
+            font-size: 32px; cursor: pointer; padding: 0; margin: 0;
+            display: flex; align-items: center; justify-content: center;
+            line-height: 1;
         }
 
         .back-btn {
-            display: none; /* Gestito da JS */
+            display: none; 
             align-items: center; justify-content: center;
             background: var(--white); color: var(--accent-pink);
             border: 2px solid var(--primary-pink); border-radius: 50%;
@@ -62,7 +69,6 @@
         
         .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 500px; padding-bottom: 100px; }
 
-        /* BOX NORMALI */
         .box {
             background: var(--white); padding: 20px 15px; border-radius: 20px; text-align: center;
             font-weight: 600; cursor: pointer; transition: transform 0.2s; border: 2px solid var(--primary-pink);
@@ -71,7 +77,6 @@
         .box:active { transform: scale(0.95); }
         .box-icon { font-size: 24px; margin-bottom: 10px; }
 
-        /* BOX "AGGIUNGI" ROSA */
         .box-add {
             background: var(--accent-pink); padding: 20px 15px; border-radius: 20px; text-align: center;
             font-weight: bold; color: white; cursor: pointer; transition: transform 0.2s; 
@@ -87,7 +92,28 @@
             font-size: 14px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); cursor: pointer; z-index: 10; border: 2px solid white;
         }
 
-        /* MODALE */
+        /* --- SIDEBAR MENU SCORREVOLE --- */
+        .sidebar-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);
+            display: none; z-index: 10002; backdrop-filter: blur(2px);
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .sidebar {
+            position: fixed; top: 0; left: -300px; width: 280px; height: 100%;
+            background: var(--white); z-index: 10003; transition: left 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 2px 0 15px rgba(0,0,0,0.2); padding: 25px; box-sizing: border-box;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-header {
+            font-size: 22px; font-weight: bold; color: var(--accent-pink);
+            margin-bottom: 25px; border-bottom: 2px solid var(--primary-pink); padding-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .sidebar-close { font-size: 24px; cursor: pointer; color: var(--dark-text); }
+        .sidebar-content { flex: 1; overflow-y: auto; }
+        .reg-info-text { font-size: 13px; color: #666; margin: 0 0 10px 0; line-height: 1.4; }
+
+        /* MODALE SCHEDA US */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);
             display: none; justify-content: center; align-items: flex-end; z-index: 1000;
@@ -110,7 +136,7 @@
         input[readonly] { background-color: #f2f2f2; color: #888; }
         .btn-save { width: 100%; padding: 15px; background: var(--accent-pink); color: white; border: none; border-radius: 15px; font-size: 18px; font-weight: bold; margin-top: 10px; cursor: pointer; }
 
-        /* --- FINESTRE DI DIALOGO CUSTOM (NO LINK NETLIFY) --- */
+        /* FINESTRE DI DIALOGO CUSTOM */
         .custom-dialog-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); backdrop-filter: blur(3px);
@@ -127,7 +153,7 @@
         .custom-btn-cancel { flex: 1; padding: 12px; border: none; background: #e0e0e0; color: #555; border-radius: 12px; font-weight: bold; cursor: pointer; }
         .custom-btn-ok { flex: 1; padding: 12px; border: none; background: var(--accent-pink); color: white; border-radius: 12px; font-weight: bold; cursor: pointer; }
 
-        /* --- LOADER TAVOLETTA --- */
+        /* LOADER TAVOLETTA */
         .loader-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: var(--bg-color); display: none; flex-direction: column;
@@ -162,6 +188,26 @@
     </style>
 </head>
 <body>
+
+    <!-- MENU A SCORRIMENTO (SIDEBAR) -->
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+    <div id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <span>Menù</span>
+            <div class="sidebar-close" onclick="closeSidebar()">✕</div>
+        </div>
+        <div class="sidebar-content">
+            <div class="form-group">
+                <label style="font-size: 16px;">Registrazione Utente</label>
+                <p class="reg-info-text">Imposta qui il tuo nome. Verrà aggiunto al database e selezionato in automatico come operatore su questo dispositivo.</p>
+                <input type="text" id="nome-registrazione" placeholder="Es: Mario R.">
+                <button class="btn-save" onclick="registraUtente()" style="padding:10px; font-size:16px;">Registrati</button>
+            </div>
+            <div id="reg-status" style="margin-top:15px; font-size:14px; color:var(--accent-pink); display:none; background:var(--primary-pink); padding:10px; border-radius:10px;">
+                Utente attivo sul dispositivo:<br><b id="reg-name" style="font-size:18px;"></b>
+            </div>
+        </div>
+    </div>
 
     <!-- POP-UP CUSTOM: CAT DICE -->
     <div id="custom-dialog" class="custom-dialog-overlay">
@@ -203,9 +249,10 @@
 
     <div id="toast">Messaggio</div>
 
-    <!-- HEADER: BACK, BREADCRUMB, SEARCH -->
+    <!-- HEADER: MENU, BACK, BREADCRUMB, SEARCH -->
     <div class="header-container">
         <div class="top-bar">
+            <button class="hamburger-btn" onclick="openSidebar()">☰</button>
             <div id="back-arrow" class="back-btn" onclick="goBack()">←</div>
         </div>
         <div id="breadcrumb" class="breadcrumb">Home</div>
@@ -244,6 +291,7 @@
             <div class="form-group">
                 <label>Operatore</label>
                 <select id="operatore">
+                    <!-- Verrà popolato dinamicamente -->
                     <option value="Archeologo 1">Archeologo 1</option>
                     <option value="Archeologo 2">Archeologo 2</option>
                 </select>
@@ -289,6 +337,7 @@
         let path = { scavo: "", cantiere: "", quadrante: "" };
         let rapportiDati = [];
         let databaseLocale = [];
+        let operatoriList = []; // Array per la lista di operatori dal database
 
         const grid = document.getElementById('main-grid');
         const breadcrumb = document.getElementById('breadcrumb');
@@ -302,7 +351,81 @@
             setTimeout(() => t.classList.remove('show'), 3000);
         }
 
-        /* --- GESTIONE DEI POP-UP CUSTOM (PROMPT E CONFIRM) --- */
+        /* --- GESTIONE SIDEBAR E REGISTRAZIONE --- */
+        function openSidebar() {
+            document.getElementById('sidebar-overlay').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('sidebar-overlay').style.opacity = '1';
+                document.getElementById('sidebar').style.left = '0';
+            }, 10);
+            
+            const savedName = localStorage.getItem('defaultOperatore');
+            if(savedName) {
+                document.getElementById('nome-registrazione').value = savedName;
+                document.getElementById('reg-status').style.display = 'block';
+                document.getElementById('reg-name').innerText = savedName;
+            }
+        }
+        
+        function closeSidebar() {
+            document.getElementById('sidebar').style.left = '-300px';
+            document.getElementById('sidebar-overlay').style.opacity = '0';
+            setTimeout(() => { document.getElementById('sidebar-overlay').style.display = 'none'; }, 300);
+        }
+
+        async function registraUtente() {
+            const nome = document.getElementById('nome-registrazione').value.trim();
+            if(!nome) { showToast("Inserisci un nome o una sigla!"); return; }
+            
+            // 1. Salva in locale sul dispositivo
+            localStorage.setItem('defaultOperatore', nome);
+            document.getElementById('reg-status').style.display = 'block';
+            document.getElementById('reg-name').innerText = nome;
+            
+            // 2. Aggiorna la tendina subito
+            updateOperatoriDropdown(nome);
+            
+            showToast("Nome impostato sul dispositivo!");
+            
+            // 3. Invia a Google Sheets
+            try {
+                fetch(SCRIPT_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    body: JSON.stringify({ action: "REGISTER_USER", nome: nome }) 
+                });
+            } catch(e) {
+                console.error("Errore salvataggio DB", e);
+            }
+            
+            setTimeout(() => closeSidebar(), 1500);
+        }
+
+        function updateOperatoriDropdown(nuovoNome = null) {
+            const select = document.getElementById('operatore');
+            
+            if(nuovoNome && !operatoriList.includes(nuovoNome)) {
+                operatoriList.push(nuovoNome);
+            }
+            
+            if(operatoriList.length === 0) operatoriList = ["Archeologo 1", "Archeologo 2"];
+            
+            select.innerHTML = "";
+            operatoriList.forEach(op => {
+                const opt = document.createElement('option');
+                opt.value = op;
+                opt.innerText = op;
+                select.appendChild(opt);
+            });
+            
+            // Pre-seleziona il default salvato se esiste
+            const defaultOp = localStorage.getItem('defaultOperatore');
+            if(defaultOp && operatoriList.includes(defaultOp)) {
+                select.value = defaultOp;
+            }
+        }
+
+        /* --- GESTIONE DEI POP-UP CUSTOM --- */
         let dialogResolve = null;
 
         function showCustomDialog(type, message, title = "Cat dice") {
@@ -343,9 +466,8 @@
 
         function customConfirm(message) { return showCustomDialog('confirm', message); }
         function customPrompt(message) { return showCustomDialog('prompt', message); }
-        /* ----------------------------------------------------- */
 
-        // --- GESTIONE SWIPE RESISTENTE ---
+        /* --- GESTIONE SWIPE RESISTENTE --- */
         let touchStartY = 0;
         let isDragging = false;
 
@@ -390,6 +512,11 @@
                 const data = await response.json();
                 databaseLocale = data.us || [];
                 if (data.strutturaObj) dataStruttura = data.strutturaObj;
+                
+                // Aggiorniamo la lista operatori dal database (se l'Apps Script la restituisce)
+                if (data.utenti) operatoriList = data.utenti;
+                updateOperatoriDropdown();
+
                 if (!isSearchReturn) render();
                 else {
                     currentLevel = "US_LIST";
@@ -436,7 +563,6 @@
             }
             breadcrumb.innerHTML = bcText;
 
-            // CREAZIONE DEL BOX "AGGIUNGI" DINAMICO
             const addBox = document.createElement('div');
             addBox.className = 'box-add';
             
@@ -444,14 +570,12 @@
                 addBox.innerHTML = `<div class='box-add-icon'>+</div>Aggiungi Scavo`;
                 addBox.onclick = handleFabClick;
                 grid.appendChild(addBox);
-                
                 Object.keys(dataStruttura).forEach(s => createBox(s, "🏗️", () => navTo('CANTIERE', s)));
                 
             } else if (currentLevel === "CANTIERE") {
                 addBox.innerHTML = `<div class='box-add-icon'>+</div>Aggiungi Cantiere`;
                 addBox.onclick = handleFabClick;
                 grid.appendChild(addBox);
-                
                 const cantieri = dataStruttura[path.scavo] || {};
                 Object.keys(cantieri).forEach(c => createBox(c, "🚧", () => navTo('QUADRANTE', c)));
                 
@@ -459,7 +583,6 @@
                 addBox.innerHTML = `<div class='box-add-icon'>+</div>Aggiungi Quadrante`;
                 addBox.onclick = handleFabClick;
                 grid.appendChild(addBox);
-                
                 const quadranti = (dataStruttura[path.scavo] && dataStruttura[path.scavo][path.cantiere]) ? dataStruttura[path.scavo][path.cantiere] : [];
                 quadranti.forEach(q => createBox(q, "🟦", () => { path.quadrante = q; currentLevel = "US_LIST"; render(); }));
                 
@@ -575,7 +698,9 @@
             document.getElementById('form-context').value = `${path.scavo} | ${path.cantiere} | ${path.quadrante}`;
             const preview = document.getElementById('preview_foto');
             const saveBtnText = document.getElementById('save-btn-text');
+            const operatoreSelect = document.getElementById('operatore');
             rapportiDati = [];
+            
             if(d) {
                 const map = { "Copre": d.Copre, "È coperto da": d.Coperto_da, "Taglia": d.Taglia, "È tagliato da": d.Tagliato_da, "Riempie": d.Riempie, "È riempito da": d.Riempito_da };
                 Object.keys(map).forEach(t => { if(map[t]) map[t].toString().split(',').forEach(n => { if(n.trim()) rapportiDati.push({id: Math.random(), tipo: t, num: n.trim()}); })});
@@ -583,6 +708,10 @@
                 document.getElementById('tipo_us').value = (d.Tipo_US || "piano").toLowerCase();
                 document.getElementById('descrizione').value = d.Descrizione || "";
                 document.getElementById('interpretazione').value = d.Interpretazione || "";
+                
+                // Se c'è già un operatore salvato nella scheda US dal DB
+                if(d.Operatore) operatoreSelect.value = d.Operatore;
+
                 let url = d.Link || d.link || d.LINK || d.URL || "";
                 if(url && url.length > 10) {
                     if(url.includes("drive.google.com")) {
@@ -594,6 +723,11 @@
                 saveBtnText.innerText = "AGGIORNA DATI";
             } else {
                 document.getElementById('num_us').value = ""; document.getElementById('descrizione').value = ""; document.getElementById('interpretazione').value = "";
+                
+                // Pre-imposta per default l'operatore registrato sul dispositivo locale 
+                const defaultOp = localStorage.getItem('defaultOperatore');
+                if(defaultOp) operatoreSelect.value = defaultOp;
+
                 preview.style.display = 'none'; saveBtnText.innerText = "INVIA DATI";
             }
             document.getElementById('file_foto').value = ""; renderChips();
