@@ -1,775 +1,155 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>US Digitali - ArcheoApp</title>
-    <style>
-        :root {
-            --primary-pink: #fce4ec;
-            --accent-pink: #f06292;
-            --dark-text: #4a4a4a;
-            --white: #ffffff;
-            --bg-color: #fff5f8;
+function doGet(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheetUS = ss.getSheetByName("Dati_US");
+  var sheetStrut = ss.getSheetByName("Struttura");
+  var sheetUtenti = ss.getSheetByName("utenti");
+
+  var dataUS = sheetUS ? getSheetData(sheetUS) : [];
+  var dataStrut = sheetStrut ? getSheetData(sheetStrut) : [];
+
+  var strutturaObj = {};
+  dataStrut.forEach(function(row) {
+    var s = row.Scavo || row.scavo || row["Scavo"];
+    var c = row.Cantiere || row.cantiere || row["Cantiere"];
+    var q = row.Quadrante || row.quadrante || row["Quadrante"];
+    if (!s) return;
+    if (!strutturaObj[s]) strutturaObj[s] = {};
+    if (c && !strutturaObj[s][c]) strutturaObj[s][c] = [];
+    if (q && c && strutturaObj[s][c].indexOf(q) === -1) strutturaObj[s][c].push(q);
+  });
+
+  var utentiList = [];
+  if (sheetUtenti) {
+    var uData = sheetUtenti.getDataRange().getValues();
+    for (var i = 1; i < uData.length; i++) {
+       if (uData[i][0]) utentiList.push(uData[i][0]);
+    }
+  }
+
+  return ContentService.createTextOutput(JSON.stringify({
+    us: dataUS,
+    strutturaObj: strutturaObj,
+    utenti: utentiList
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  
+  try {
+    var data = JSON.parse(e.postData.contents);
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    
+    if (data.action === "REGISTER_USER") {
+      var sheetUtenti = ss.getSheetByName("utenti");
+      if (!sheetUtenti) {
+        sheetUtenti = ss.insertSheet("utenti");
+        sheetUtenti.appendRow(["Nome", "Data Registrazione"]);
+      }
+      sheetUtenti.appendRow([data.nome, new Date()]);
+      return ContentService.createTextOutput(JSON.stringify({"result":"success"})).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (data.action === "SAVE_STRUTTURA") {
+      var sheetStrut = ss.getSheetByName("Struttura");
+      if (!sheetStrut) sheetStrut = ss.insertSheet("Struttura");
+      sheetStrut.clearContents();
+      sheetStrut.appendRow(["Scavo", "Cantiere", "Quadrante"]);
+
+      for (var s in data.struttura) {
+        var cantieri = data.struttura[s];
+        var haCantieri = false;
+        for (var c in cantieri) {
+          haCantieri = true;
+          var quadranti = cantieri[c];
+          if (quadranti.length === 0) {
+            sheetStrut.appendRow([s, c, ""]);
+          } else {
+            quadranti.forEach(function(q) { sheetStrut.appendRow([s, c, q]); });
+          }
         }
+        if (!haCantieri) sheetStrut.appendRow([s, "", ""]);
+      }
+      return ContentService.createTextOutput(JSON.stringify({"result":"success"})).setMimeType(ContentService.MimeType.JSON);
+    }
 
-        html, body { 
-            overscroll-behavior-y: contain; 
-            overflow: hidden;
-            height: 100%;
+    if (data.action === "DELETE_US") {
+      var sheet = ss.getSheetByName("Dati_US");
+      var values = sheet.getDataRange().getValues();
+      for (var i = values.length - 1; i >= 1; i--) {
+        if (values[i][1] == data.scavo && values[i][2] == data.cantiere && values[i][3] == data.quadrante && values[i][4] == data.numero_us) {
+          sheet.deleteRow(i + 1);
+          break;
         }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--dark-text);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            overflow-y: auto;
-        }
-
-        .header-container { width: 100%; max-width: 500px; margin-bottom: 20px; }
-        
-        .top-bar {
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-            margin-bottom: 15px;
-            gap: 10px;
-        }
-
-        /* MENU HAMBURGER */
-        .hamburger-btn {
-            background: none; border: none; color: var(--accent-pink);
-            font-size: 32px; cursor: pointer; padding: 0; margin: 0;
-            display: flex; align-items: center; justify-content: center;
-            line-height: 1;
-        }
-
-        .back-btn {
-            display: none; 
-            align-items: center; justify-content: center;
-            background: var(--white); color: var(--accent-pink);
-            border: 2px solid var(--primary-pink); border-radius: 50%;
-            width: 35px; height: 35px; cursor: pointer;
-            font-size: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-
-        .breadcrumb { 
-            font-size: 14px; color: var(--dark-text); 
-            font-weight: 500; opacity: 0.8; margin-bottom: 10px;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .breadcrumb b { color: var(--accent-pink); opacity: 1; }
-
-        .search-bar { width: 100%; padding: 12px 20px; border-radius: 25px; border: none; background: var(--white); box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-size: 16px; outline: none; box-sizing: border-box; }
-        
-        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 500px; padding-bottom: 100px; }
-
-        .box {
-            background: var(--white); padding: 20px 15px; border-radius: 20px; text-align: center;
-            font-weight: 600; cursor: pointer; transition: transform 0.2s; border: 2px solid var(--primary-pink);
-            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 90px; position: relative;
-        }
-        .box:active { transform: scale(0.95); }
-        .box-icon { font-size: 24px; margin-bottom: 10px; }
-
-        .box-add {
-            background: var(--accent-pink); padding: 20px 15px; border-radius: 20px; text-align: center;
-            font-weight: bold; color: white; cursor: pointer; transition: transform 0.2s; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 90px;
-            box-shadow: 0 6px 15px rgba(240, 98, 146, 0.3); border: none;
-        }
-        .box-add:active { transform: scale(0.95); }
-        .box-add-icon { font-size: 28px; margin-bottom: 5px; font-weight: normal; }
-
-        .delete-btn {
-            position: absolute; top: -10px; left: -10px; background: #ff5252; color: white; border-radius: 50%;
-            width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
-            font-size: 14px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); cursor: pointer; z-index: 10; border: 2px solid white;
-        }
-
-        /* --- SIDEBAR MENU SCORREVOLE --- */
-        .sidebar-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);
-            display: none; z-index: 10002; backdrop-filter: blur(2px);
-            opacity: 0; transition: opacity 0.3s ease;
-        }
-        .sidebar {
-            position: fixed; top: 0; left: -300px; width: 280px; height: 100%;
-            background: var(--white); z-index: 10003; transition: left 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            box-shadow: 2px 0 15px rgba(0,0,0,0.2); padding: 25px; box-sizing: border-box;
-            display: flex; flex-direction: column;
-        }
-        .sidebar-header {
-            font-size: 22px; font-weight: bold; color: var(--accent-pink);
-            margin-bottom: 25px; border-bottom: 2px solid var(--primary-pink); padding-bottom: 15px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .sidebar-close { font-size: 24px; cursor: pointer; color: var(--dark-text); }
-        .sidebar-content { flex: 1; overflow-y: auto; }
-        .reg-info-text { font-size: 13px; color: #666; margin: 0 0 10px 0; line-height: 1.4; }
-
-        /* MODALE SCHEDA US */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);
-            display: none; justify-content: center; align-items: flex-end; z-index: 1000;
-            backdrop-filter: blur(2px);
-        }
-
-        .modal-content {
-            background: var(--white); width: 100%; max-width: 500px; 
-            height: 92vh; border-radius: 30px 30px 0 0; padding: 15px 25px 40px 25px; 
-            overflow-y: auto; box-sizing: border-box; 
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            position: relative; touch-action: pan-y;
-            will-change: transform;
-        }
-
-        .drag-handle { width: 40px; height: 5px; background: #ddd; border-radius: 3px; margin: 0 auto 15px auto; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 5px; color: var(--accent-pink); }
-        input, select, textarea { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--primary-pink); font-size: 16px; box-sizing: border-box; }
-        input[readonly] { background-color: #f2f2f2; color: #888; }
-        .btn-save { width: 100%; padding: 15px; background: var(--accent-pink); color: white; border: none; border-radius: 15px; font-size: 18px; font-weight: bold; margin-top: 10px; cursor: pointer; }
-
-        /* FINESTRE DI DIALOGO CUSTOM */
-        .custom-dialog-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); backdrop-filter: blur(3px);
-            display: none; align-items: center; justify-content: center; z-index: 10005;
-        }
-        .custom-dialog-box {
-            background: white; padding: 25px; border-radius: 20px; width: 85%; max-width: 350px;
-            text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 2px solid var(--primary-pink);
-        }
-        .custom-dialog-title { color: var(--accent-pink); margin: 0 0 15px 0; font-size: 20px; }
-        .custom-dialog-message { margin-bottom: 20px; font-size: 16px; color: var(--dark-text); }
-        .custom-dialog-input { display: none; width: 100%; margin-bottom: 20px; padding: 12px; border-radius: 12px; border: 1px solid var(--accent-pink); box-sizing: border-box; font-size:16px;}
-        .custom-dialog-buttons { display: flex; gap: 10px; justify-content: center; }
-        .custom-btn-cancel { flex: 1; padding: 12px; border: none; background: #e0e0e0; color: #555; border-radius: 12px; font-weight: bold; cursor: pointer; }
-        .custom-btn-ok { flex: 1; padding: 12px; border: none; background: var(--accent-pink); color: white; border-radius: 12px; font-weight: bold; cursor: pointer; }
-
-        /* LOADER TAVOLETTA */
-        .loader-container {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: var(--bg-color); display: none; flex-direction: column;
-            justify-content: center; align-items: center; z-index: 9999;
-        }
-
-        .archaeo-icon {
-            width: 160px; height: 160px; fill: none; stroke: var(--accent-pink);
-            stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
-            transform-box: fill-box;
-        }
-
-        .brush-anim { animation: dusting 1.2s ease-in-out infinite; transform-origin: top center; }
-        .dust-particle { animation: puff 1.2s ease-in-out infinite; fill: var(--accent-pink); stroke: none; }
-
-        @keyframes dusting {
-            0%, 100% { transform: rotate(-22deg) translateX(-8px); }
-            50% { transform: rotate(22deg) translateX(8px); }
-        }
-        @keyframes puff {
-            0%, 100% { opacity: 0; transform: translateY(0) scale(0.5); }
-            50% { opacity: 0.6; transform: translateY(-12px) scale(1.2); }
-        }
-
-        #toast {
-            position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
-            background: var(--accent-pink); color: white; padding: 12px 25px;
-            border-radius: 25px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            z-index: 10001; transition: bottom 0.4s ease; font-weight: bold; text-align: center; min-width: 200px;
-        }
-        #toast.show { bottom: 40px; }
-    </style>
-</head>
-<body>
-
-    <!-- MENU A SCORRIMENTO (SIDEBAR) -->
-    <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
-    <div id="sidebar" class="sidebar">
-        <div class="sidebar-header">
-            <span>Menù</span>
-            <div class="sidebar-close" onclick="closeSidebar()">✕</div>
-        </div>
-        <div class="sidebar-content">
-            <div class="form-group">
-                <label style="font-size: 16px;">Registrazione Utente</label>
-                <p class="reg-info-text">Imposta qui il tuo nome. Verrà aggiunto al database e selezionato in automatico come operatore su questo dispositivo.</p>
-                <input type="text" id="nome-registrazione" placeholder="Es: Mario R.">
-                <button class="btn-save" onclick="registraUtente()" style="padding:10px; font-size:16px;">Registrati</button>
-            </div>
-            <div id="reg-status" style="margin-top:15px; font-size:14px; color:var(--accent-pink); display:none; background:var(--primary-pink); padding:10px; border-radius:10px;">
-                Utente attivo sul dispositivo:<br><b id="reg-name" style="font-size:18px;"></b>
-            </div>
-        </div>
-    </div>
-
-    <!-- POP-UP CUSTOM: CAT DICE -->
-    <div id="custom-dialog" class="custom-dialog-overlay">
-        <div class="custom-dialog-box">
-            <h3 class="custom-dialog-title" id="dialog-title">Cat dice</h3>
-            <div class="custom-dialog-message" id="dialog-message"></div>
-            <input type="text" id="dialog-input" class="custom-dialog-input" placeholder="Scrivi qui...">
-            <div class="custom-dialog-buttons">
-                <button class="custom-btn-cancel" onclick="closeCustomDialog(false)">Annulla</button>
-                <button class="custom-btn-ok" onclick="closeCustomDialog(true)">OK</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- LOADER -->
-    <div id="loader" class="loader-container">
-        <svg class="archaeo-icon" viewBox="0 0 64 64">
-            <path d="M15 15 L48 12 L52 45 L40 55 L12 50 L10 28 Z" opacity="0.3" fill="none" stroke-width="2.5"/>
-            <path d="M30 13 L33 22 L28 32" opacity="0.2" /> 
-            
-            <text font-size="2.8" fill="var(--accent-pink)" opacity="0.8" 
-                  x="32" text-anchor="middle"
-                  style="font-family: serif; letter-spacing: 0.5px; stroke: none; font-weight: 100;">
-                <tspan x="32" y="24">𒆪𒀠𒁍𒌝𒀀𒇉𒄒𒉣</tspan>
-                <tspan x="32" y="30">𒌓𒄒𒉣𒋾𒀭𒆘𒀀</tspan>
-                <tspan x="32" y="36">𒀭𒌓𒀝𒆪𒌋𒀭</tspan>
-                <tspan x="32" y="42">𒈦𒇻𒀠𒁍𒌝𒆘𒀀𒁺</tspan>
-                <tspan x="32" y="48">𒀭𒀠𒀫𒀭𒈾</tspan>
-            </text>
-            <circle class="dust-particle" cx="30" cy="18" r="1.2" />
-            <circle class="dust-particle" cx="42" cy="22" r="0.8" style="animation-delay: 0.3s;"/>
-            <g class="brush-anim">
-                <rect x="30" y="2" width="4" height="18" rx="1" fill="var(--accent-pink)" /> 
-                <path d="M26 20 L38 20 L42 35 L22 35 Z" fill="var(--bg-color)" stroke-width="2" />
-            </g>
-        </svg>
-        <div id="loader-text" style="margin-top: 15px; color: var(--accent-pink); font-weight: bold; font-size: 16px; letter-spacing: 1px;">ANALISI REPERTI...</div>
-    </div>
-
-    <div id="toast">Messaggio</div>
-
-    <!-- HEADER: MENU, BACK, BREADCRUMB, SEARCH -->
-    <div class="header-container">
-        <div class="top-bar">
-            <button class="hamburger-btn" onclick="openSidebar()">☰</button>
-            <div id="back-arrow" class="back-btn" onclick="goBack()">←</div>
-        </div>
-        <div id="breadcrumb" class="breadcrumb">Home</div>
-        <input type="text" id="search-input" class="search-bar" placeholder="Cerca US..." oninput="cercaUS(this.value)">
-    </div>
-
-    <div id="main-grid" class="grid-container"></div>
-
-    <!-- MODALE SCHEDA US -->
-    <div id="form-modal" class="modal-overlay" onclick="handleOverlayClick(event)">
-        <div class="modal-content" id="modal-content">
-            <div class="drag-handle"></div>
-            <h2 style="text-align:center; color: var(--accent-pink); margin-top:0;">Scheda US</h2>
-            
-            <div class="form-group">
-                <label>Contesto</label>
-                <input type="text" id="form-context" readonly>
-            </div>
-
-            <div class="form-group">
-                <label>Numero US</label>
-                <input type="number" id="num_us" placeholder="Es: 100">
-            </div>
-
-            <div class="form-group">
-                <label>Tipo US</label>
-                <select id="tipo_us">
-                    <option value="piano">Piano</option>
-                    <option value="taglio">Taglio</option>
-                    <option value="riempimento">Riempimento</option>
-                    <option value="accumulo">Accumulo</option>
-                    <option value="installazione">Installazione</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Operatore</label>
-                <select id="operatore">
-                    <!-- Verrà popolato dinamicamente -->
-                    <option value="Archeologo 1">Archeologo 1</option>
-                    <option value="Archeologo 2">Archeologo 2</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Foto</label>
-                <input type="file" id="file_foto" accept="image/*" style="margin-top: 5px;">
-                <img id="preview_foto" src="" style="width: 100%; margin-top: 10px; border-radius: 12px; display: none; border: 1px solid var(--primary-pink); object-fit: contain;">
-            </div>
-
-            <label>Rapporti Stratigrafici</label>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px;">
-                <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('Copre')">Copre</button>
-                <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('È coperto da')">Coperto da</button>
-                <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('Taglia')">Taglia</button>
-                <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('È tagliato da')">Tagliato da</button>
-                <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('Riempie')">Riempie</button>
-                <button type="button" class="btn-save" style="font-size:12px; padding:8px;" onclick="addRapporto('È riempito da')">Riempito da</button>
-            </div>
-            <div id="chips-area" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:10px;"></div>
-
-            <div class="form-group" style="margin-top:15px;">
-                <label>Descrizione</label>
-                <textarea id="descrizione" rows="3"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label>Interpretazione</label>
-                <textarea id="interpretazione" rows="3"></textarea>
-            </div>
-
-            <button class="btn-save" id="save-btn-text" onclick="salvaDati()">INVIA DATI</button>
-            <button onclick="closeModal()" style="width:100%; background:none; border:none; color:gray; margin-top:15px; cursor:pointer;">Annulla</button>
-        </div>
-    </div>
-
-    <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwrcw9ubYVb83iuzwCCg5Dsg_Bb6hwktmyaJ2sj5hcxWOZEt4rmA8M884bbaSeNhb8r/exec';
-
-        let dataStruttura = {};
-        let currentLevel = "HOME";
-        let path = { scavo: "", cantiere: "", quadrante: "" };
-        let rapportiDati = [];
-        let databaseLocale = [];
-        let operatoriList = []; // Array per la lista di operatori dal database
-
-        const grid = document.getElementById('main-grid');
-        const breadcrumb = document.getElementById('breadcrumb');
-        const modal = document.getElementById('form-modal');
-        const modalContent = document.getElementById('modal-content');
-        const chipsArea = document.getElementById('chips-area');
-
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.innerText = msg; t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 3000);
-        }
-
-        /* --- GESTIONE SIDEBAR E REGISTRAZIONE --- */
-        function openSidebar() {
-            document.getElementById('sidebar-overlay').style.display = 'block';
-            setTimeout(() => {
-                document.getElementById('sidebar-overlay').style.opacity = '1';
-                document.getElementById('sidebar').style.left = '0';
-            }, 10);
-            
-            const savedName = localStorage.getItem('defaultOperatore');
-            if(savedName) {
-                document.getElementById('nome-registrazione').value = savedName;
-                document.getElementById('reg-status').style.display = 'block';
-                document.getElementById('reg-name').innerText = savedName;
-            }
-        }
-        
-        function closeSidebar() {
-            document.getElementById('sidebar').style.left = '-300px';
-            document.getElementById('sidebar-overlay').style.opacity = '0';
-            setTimeout(() => { document.getElementById('sidebar-overlay').style.display = 'none'; }, 300);
-        }
-
-        async function registraUtente() {
-            const nome = document.getElementById('nome-registrazione').value.trim();
-            if(!nome) { showToast("Inserisci un nome o una sigla!"); return; }
-            
-            // 1. Salva in locale sul dispositivo
-            localStorage.setItem('defaultOperatore', nome);
-            document.getElementById('reg-status').style.display = 'block';
-            document.getElementById('reg-name').innerText = nome;
-            
-            // 2. Aggiorna la tendina subito
-            updateOperatoriDropdown(nome);
-            
-            showToast("Nome impostato sul dispositivo!");
-            
-            // 3. Invia a Google Sheets
-            try {
-                fetch(SCRIPT_URL, { 
-                    method: 'POST', 
-                    mode: 'no-cors', 
-                    body: JSON.stringify({ action: "REGISTER_USER", nome: nome }) 
-                });
-            } catch(e) {
-                console.error("Errore salvataggio DB", e);
-            }
-            
-            setTimeout(() => closeSidebar(), 1500);
-        }
-
-        function updateOperatoriDropdown(nuovoNome = null) {
-            const select = document.getElementById('operatore');
-            
-            if(nuovoNome && !operatoriList.includes(nuovoNome)) {
-                operatoriList.push(nuovoNome);
-            }
-            
-            if(operatoriList.length === 0) operatoriList = ["Archeologo 1", "Archeologo 2"];
-            
-            select.innerHTML = "";
-            operatoriList.forEach(op => {
-                const opt = document.createElement('option');
-                opt.value = op;
-                opt.innerText = op;
-                select.appendChild(opt);
-            });
-            
-            // Pre-seleziona il default salvato se esiste
-            const defaultOp = localStorage.getItem('defaultOperatore');
-            if(defaultOp && operatoriList.includes(defaultOp)) {
-                select.value = defaultOp;
-            }
-        }
-
-        /* --- GESTIONE DEI POP-UP CUSTOM --- */
-        let dialogResolve = null;
-
-        function showCustomDialog(type, message, title = "Cat dice") {
-            return new Promise((resolve) => {
-                dialogResolve = resolve;
-                document.getElementById('dialog-title').innerText = title;
-                document.getElementById('dialog-message').innerHTML = message;
-                const inputField = document.getElementById('dialog-input');
-                
-                if (type === 'prompt') {
-                    inputField.style.display = 'block';
-                    inputField.value = '';
-                    setTimeout(() => inputField.focus(), 100);
-                } else {
-                    inputField.style.display = 'none';
-                }
-                
-                document.getElementById('custom-dialog').style.display = 'flex';
-            });
-        }
-
-        function closeCustomDialog(isConfirm) {
-            document.getElementById('custom-dialog').style.display = 'none';
-            if (dialogResolve) {
-                const inputField = document.getElementById('dialog-input');
-                if (inputField.style.display === 'block') {
-                    dialogResolve(isConfirm ? inputField.value.trim() : null);
-                } else {
-                    dialogResolve(isConfirm);
-                }
-                dialogResolve = null;
-            }
-        }
-
-        document.getElementById('dialog-input').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') closeCustomDialog(true);
-        });
-
-        function customConfirm(message) { return showCustomDialog('confirm', message); }
-        function customPrompt(message) { return showCustomDialog('prompt', message); }
-
-        /* --- GESTIONE SWIPE RESISTENTE --- */
-        let touchStartY = 0;
-        let isDragging = false;
-
-        modalContent.addEventListener('touchstart', e => {
-            touchStartY = e.touches[0].clientY;
-            isDragging = false;
-        }, {passive: true});
-
-        modalContent.addEventListener('touchmove', e => {
-            const touchY = e.touches[0].clientY;
-            const diff = touchY - touchStartY;
-            if (diff > 0 && modalContent.scrollTop <= 0) {
-                isDragging = true;
-                e.preventDefault();
-                modalContent.style.transform = `translateY(${diff * 0.4}px)`;
-                modalContent.style.transition = 'none';
-            }
-        }, {passive: false});
-
-        modalContent.addEventListener('touchend', e => {
-            if (!isDragging) return;
-            const diff = e.changedTouches[0].clientY - touchStartY;
-            modalContent.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
-            if (diff > 200) closeModal();
-            else modalContent.style.transform = `translateY(0)`;
-            isDragging = false;
-        });
-
-        function handleOverlayClick(e) { if(e.target === modal) closeModal(); }
-
-        document.getElementById('file_foto').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            const preview = document.getElementById('preview_foto');
-            if (file) { preview.src = URL.createObjectURL(file); preview.style.display = 'block'; }
-        });
-
-        async function caricaDatiDalDatabase(isSearchReturn = false) {
-            document.getElementById('loader-text').innerText = "SINCRONIZZAZIONE...";
-            document.getElementById('loader').style.display = 'flex';
-            try {
-                const response = await fetch(SCRIPT_URL);
-                const data = await response.json();
-                databaseLocale = data.us || [];
-                if (data.strutturaObj) dataStruttura = data.strutturaObj;
-                
-                // Aggiorniamo la lista operatori dal database (se l'Apps Script la restituisce)
-                if (data.utenti) operatoriList = data.utenti;
-                updateOperatoriDropdown();
-
-                if (!isSearchReturn) render();
-                else {
-                    currentLevel = "US_LIST";
-                    document.getElementById('search-input').value = "";
-                    render();
-                }
-            } catch (e) { showToast("Errore connessione"); }
-            finally { document.getElementById('loader').style.display = 'none'; }
-        }
-
-        function navTo(level, name = "") {
-            document.getElementById('search-input').value = ""; 
-            if (level === 'HOME') {
-                path.scavo = ""; path.cantiere = ""; path.quadrante = "";
-                currentLevel = "HOME";
-            } else if (level === 'CANTIERE') {
-                path.scavo = name; path.cantiere = ""; path.quadrante = "";
-                currentLevel = "CANTIERE";
-            } else if (level === 'QUADRANTE') {
-                path.cantiere = name; path.quadrante = "";
-                currentLevel = "QUADRANTE";
-            }
-            render();
-        }
-
-        function goBack() {
-            if (currentLevel === "CANTIERE") navTo('HOME');
-            else if (currentLevel === "QUADRANTE") navTo('CANTIERE', path.scavo);
-            else if (currentLevel === "US_LIST") navTo('QUADRANTE', path.cantiere);
-        }
-
-        function render() {
-            grid.innerHTML = ""; 
-            const backArrow = document.getElementById('back-arrow');
-            
-            let bcText = "Home";
-            if (currentLevel === "HOME") {
-                backArrow.style.display = "none";
-            } else {
-                backArrow.style.display = "flex";
-                if (path.scavo) bcText = path.scavo;
-                if (path.cantiere) bcText += ` > ${path.cantiere}`;
-                if (path.quadrante && currentLevel === "US_LIST") bcText += ` > <b>${path.quadrante}</b>`;
-            }
-            breadcrumb.innerHTML = bcText;
-
-            const addBox = document.createElement('div');
-            addBox.className = 'box-add';
-            
-            if (currentLevel === "HOME") {
-                addBox.innerHTML = `<div class='box-add-icon'>+</div>Aggiungi Scavo`;
-                addBox.onclick = handleFabClick;
-                grid.appendChild(addBox);
-                Object.keys(dataStruttura).forEach(s => createBox(s, "🏗️", () => navTo('CANTIERE', s)));
-                
-            } else if (currentLevel === "CANTIERE") {
-                addBox.innerHTML = `<div class='box-add-icon'>+</div>Aggiungi Cantiere`;
-                addBox.onclick = handleFabClick;
-                grid.appendChild(addBox);
-                const cantieri = dataStruttura[path.scavo] || {};
-                Object.keys(cantieri).forEach(c => createBox(c, "🚧", () => navTo('QUADRANTE', c)));
-                
-            } else if (currentLevel === "QUADRANTE") {
-                addBox.innerHTML = `<div class='box-add-icon'>+</div>Aggiungi Quadrante`;
-                addBox.onclick = handleFabClick;
-                grid.appendChild(addBox);
-                const quadranti = (dataStruttura[path.scavo] && dataStruttura[path.scavo][path.cantiere]) ? dataStruttura[path.scavo][path.cantiere] : [];
-                quadranti.forEach(q => createBox(q, "🟦", () => { path.quadrante = q; currentLevel = "US_LIST"; render(); }));
-                
-            } else if (currentLevel === "US_LIST") {
-                addBox.style.height = "50px"; 
-                addBox.style.minHeight = "50px";
-                addBox.style.flexDirection = "row";
-                addBox.style.gap = "10px";
-                addBox.innerHTML = `<div style="font-size:24px; font-weight:normal;">+</div><div>Aggiungi US</div>`;
-                addBox.onclick = () => openForm();
-                grid.appendChild(addBox);
-
-                const filtrat = databaseLocale.filter(u => u.Scavo == path.scavo && u.Cantiere == path.cantiere && u.Quadrante == path.quadrante);
-                if(filtrat.length === 0) {
-                    const emptyMsg = document.createElement('p');
-                    emptyMsg.style.gridColumn = "1/-1";
-                    emptyMsg.style.textAlign = "center";
-                    emptyMsg.style.color = "gray";
-                    emptyMsg.innerText = "Nessuna US inserita.";
-                    grid.appendChild(emptyMsg);
-                }
-                filtrat.forEach(us => {
-                    const div = document.createElement('div'); div.className = 'box'; div.style.height="50px"; div.style.flexDirection="row"; div.style.justifyContent="space-between"; div.style.border="1px dashed var(--accent-pink)";
-                    div.innerHTML = `<div class='delete-btn' onclick='event.stopPropagation(); eliminaUS("${us.Numero_US}")'>✕</div><div style='display:flex;align-items:center;gap:10px'><span style='font-size:10px;color:var(--accent-pink);font-weight:bold'>US</span><b>${us.Numero_US}</b></div><small style='color:gray'>${us.Tipo_US}</small>`;
-                    div.onclick = () => openForm(us); grid.appendChild(div);
-                });
-            }
-        }
-
-        function createBox(text, icon, onClick) {
-            const div = document.createElement('div'); div.className = 'box';
-            const safeText = text.replace(/'/g, "\\'");
-            div.innerHTML = `<div class='delete-btn' onclick='event.stopPropagation(); deleteItem(\`${safeText}\`)'>✕</div><div class='box-icon'>${icon}</div>${text}`;
-            div.onclick = onClick; grid.appendChild(div);
-        }
-
-        function cercaUS(q) {
-            q = q.trim().toLowerCase(); if(!q) { render(); return; }
-            breadcrumb.innerHTML = `<span>Risultati per: "${q}"</span>`; 
-            grid.innerHTML = "";
-            databaseLocale.filter(u => String(u.Numero_US).includes(q)).forEach(us => {
-                const div = document.createElement('div'); div.className = 'box'; div.style.minHeight="60px"; div.style.alignItems="flex-start";
-                div.innerHTML = `<div class='delete-btn' onclick='event.stopPropagation(); eliminaUS("${us.Numero_US}")'>✕</div><div style='width:100%; display:flex; justify-content:space-between; padding-left:10px;'><b>US ${us.Numero_US}</b><small>${us.Tipo_US}</small></div><div style='font-size:10px; color:var(--accent-pink); padding-left:10px;'>📍 ${us.Scavo} | ${us.Cantiere} | ${us.Quadrante}</div>`;
-                div.onclick = () => { path.scavo = us.Scavo; path.cantiere = us.Cantiere; path.quadrante = us.Quadrante; openForm(us, true); }; grid.appendChild(div);
-            });
-        }
-
-        async function handleFabClick() {
-            let entita = "Scavo";
-            if(currentLevel === "CANTIERE") entita = "Cantiere";
-            if(currentLevel === "QUADRANTE") entita = "Quadrante";
-
-            const nuovo = await customPrompt(`Inserisci nome del nuovo <b>${entita}</b>:`); 
-            if (!nuovo) return;
-            
-            if (currentLevel === "HOME") dataStruttura[nuovo] = {};
-            else if (currentLevel === "CANTIERE") dataStruttura[path.scavo][nuovo] = [];
-            else if (currentLevel === "QUADRANTE") dataStruttura[path.scavo][path.cantiere].push(nuovo);
-            
-            render(); 
-            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "SAVE_STRUTTURA", struttura: dataStruttura }) });
-            showToast("Aggiunto!");
-        }
-
-        async function deleteItem(i) {
-            const confermato = await customConfirm(`Vuoi davvero eliminare <b>${i}</b> e TUTTE le US contenute al suo interno?`);
-            if(!confermato) return;
-
-            let usDaEliminare = [];
-
-            if(currentLevel === "HOME") {
-                usDaEliminare = databaseLocale.filter(us => us.Scavo === i);
-                delete dataStruttura[i];
-            }
-            else if(currentLevel === "CANTIERE") {
-                usDaEliminare = databaseLocale.filter(us => us.Scavo === path.scavo && us.Cantiere === i);
-                delete dataStruttura[path.scavo][i];
-            }
-            else if(currentLevel === "QUADRANTE") {
-                usDaEliminare = databaseLocale.filter(us => us.Scavo === path.scavo && us.Cantiere === path.cantiere && us.Quadrante === i);
-                dataStruttura[path.scavo][path.cantiere] = dataStruttura[path.scavo][path.cantiere].filter(q => q !== i);
-            }
-
-            render(); 
-            
-            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "SAVE_STRUTTURA", struttura: dataStruttura }) });
-
-            usDaEliminare.forEach(us => {
-                fetch(SCRIPT_URL, { 
-                    method: 'POST', 
-                    mode: 'no-cors', 
-                    body: JSON.stringify({ action: "DELETE_US", scavo: us.Scavo, cantiere: us.Cantiere, quadrante: us.Quadrante, numero_us: us.Numero_US }) 
-                });
-            });
-
-            databaseLocale = databaseLocale.filter(us => !usDaEliminare.includes(us));
-            showToast(`Cartella e ${usDaEliminare.length} US eliminate!`);
-        }
-
-        async function eliminaUS(numero_us) {
-            const confermato = await customConfirm(`Vuoi davvero eliminare l'US <b>${numero_us}</b>?`);
-            if(!confermato) return;
-
-            databaseLocale = databaseLocale.filter(us => String(us.Numero_US) !== String(numero_us));
-            render();
-            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "DELETE_US", scavo: path.scavo, cantiere: path.cantiere, quadrante: path.quadrante, numero_us: numero_us }) })
-            .then(() => { showToast("US eliminata"); caricaDatiDalDatabase(); });
-        }
-
-        let isFromSearch = false;
-        function openForm(d = null, fromSearch = false) {
-            isFromSearch = fromSearch;
-            document.getElementById('form-context').value = `${path.scavo} | ${path.cantiere} | ${path.quadrante}`;
-            const preview = document.getElementById('preview_foto');
-            const saveBtnText = document.getElementById('save-btn-text');
-            const operatoreSelect = document.getElementById('operatore');
-            rapportiDati = [];
-            
-            if(d) {
-                const map = { "Copre": d.Copre, "È coperto da": d.Coperto_da, "Taglia": d.Taglia, "È tagliato da": d.Tagliato_da, "Riempie": d.Riempie, "È riempito da": d.Riempito_da };
-                Object.keys(map).forEach(t => { if(map[t]) map[t].toString().split(',').forEach(n => { if(n.trim()) rapportiDati.push({id: Math.random(), tipo: t, num: n.trim()}); })});
-                document.getElementById('num_us').value = d.Numero_US || "";
-                document.getElementById('tipo_us').value = (d.Tipo_US || "piano").toLowerCase();
-                document.getElementById('descrizione').value = d.Descrizione || "";
-                document.getElementById('interpretazione').value = d.Interpretazione || "";
-                
-                // Se c'è già un operatore salvato nella scheda US dal DB
-                if(d.Operatore) operatoreSelect.value = d.Operatore;
-
-                let url = d.Link || d.link || d.LINK || d.URL || "";
-                if(url && url.length > 10) {
-                    if(url.includes("drive.google.com")) {
-                        const idMatch = url.match(/[-\w]{25,}/);
-                        if(idMatch) url = `https://drive.google.com/thumbnail?id=${idMatch[0]}&sz=w1000`;
-                    }
-                    preview.src = url; preview.style.display = 'block'; preview.style.minHeight = '200px';
-                } else { preview.style.display = 'none'; }
-                saveBtnText.innerText = "AGGIORNA DATI";
-            } else {
-                document.getElementById('num_us').value = ""; document.getElementById('descrizione').value = ""; document.getElementById('interpretazione').value = "";
-                
-                // Pre-imposta per default l'operatore registrato sul dispositivo locale 
-                const defaultOp = localStorage.getItem('defaultOperatore');
-                if(defaultOp) operatoreSelect.value = defaultOp;
-
-                preview.style.display = 'none'; saveBtnText.innerText = "INVIA DATI";
-            }
-            document.getElementById('file_foto').value = ""; renderChips();
-            modal.style.display = 'flex'; modalContent.style.transform = 'translateY(0)';
-        }
-
-        function closeModal() { modalContent.style.transform = 'translateY(100%)'; setTimeout(() => modal.style.display = 'none', 300); }
-        
-        async function addRapporto(t) { 
-            const n = await customPrompt(`Inserisci il numero dell'US che <b>${t}</b>:`); 
-            if(n) { 
-                rapportiDati.push({id: Date.now(), tipo: t, num: n}); 
-                renderChips(); 
-            } 
-        }
-
-        function renderChips() { chipsArea.innerHTML = ""; rapportiDati.forEach(r => { const c = document.createElement('div'); c.style="background:var(--primary-pink);padding:5px 10px;border-radius:15px;font-size:11px"; c.innerHTML = `${r.tipo}: ${r.num} <b onclick="removeRapporto(${r.id})" style="color:red;margin-left:5px">✕</b>`; chipsArea.appendChild(c); }); }
-        function removeRapporto(id) { rapportiDati = rapportiDati.filter(r => r.id !== id); renderChips(); }
-
-        const toB64 = f => new Promise((res, rej) => { const r = new FileReader(); r.readAsDataURL(f); r.onload = () => res(r.result); r.onerror = e => rej(e); });
-
-        async function salvaDati() {
-            document.getElementById('loader-text').innerText = "ARCHIVIAZIONE US...";
-            document.getElementById('loader').style.display = 'flex';
-            const btn = document.getElementById('save-btn-text'); btn.innerText = "Invio..."; btn.disabled = true;
-            let fileObj = null; const fInput = document.getElementById('file_foto');
-            if(fInput.files.length > 0) {
-                const f = fInput.files[0]; const b64 = await toB64(f);
-                fileObj = { base64: b64.split(',')[1], type: f.type };
-            }
-            const p = {
-                action: "SAVE_US", scavo: path.scavo, cantiere: path.cantiere, quadrante: path.quadrante,
-                numero_us: document.getElementById('num_us').value, tipo_us: document.getElementById('tipo_us').value,
-                operatore: document.getElementById('operatore').value, fotoFile: fileObj, rapporti: rapportiDati,
-                descrizione: document.getElementById('descrizione').value, interpretazione: document.getElementById('interpretazione').value
-            };
-            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(p) })
-            .then(() => { showToast("US Salvata!"); btn.disabled = false; closeModal(); caricaDatiDalDatabase(isFromSearch); })
-            .catch(() => { showToast("Errore!"); btn.disabled = false; document.getElementById('loader').style.display = 'none'; });
-        }
-
-        caricaDatiDalDatabase();
-    </script>
-</body>
-</html>
+      }
+      return ContentService.createTextOutput(JSON.stringify({"result":"success"})).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    var folder = DriveApp.getFolderById("10MYSnmg-5YRaU6LdLNXo6D9XvV6rtNhp");
+    var sheet = ss.getSheetByName("Dati_US");
+    if(!sheet) sheet = ss.insertSheet("Dati_US");
+    
+    var values = sheet.getDataRange().getValues();
+    var rigaTrovata = -1;
+
+    for (var i = 1; i < values.length; i++) {
+      if (values[i][1] == data.scavo && values[i][2] == data.cantiere && values[i][3] == data.quadrante && values[i][4] == data.numero_us) {
+        rigaTrovata = i + 1; break;
+      }
+    }
+
+    // GESTIONE UNIVERSALE FILE (Mantiene l'estensione corretta)
+    var fileUrl = "";
+    if (data.fotoFile && data.fotoFile.base64) {
+      var estensione = ".jpg"; 
+      if(data.fotoFile.name && data.fotoFile.name.includes('.')) {
+          estensione = data.fotoFile.name.substring(data.fotoFile.name.lastIndexOf('.'));
+      }
+      var blob = Utilities.newBlob(Utilities.base64Decode(data.fotoFile.base64), data.fotoFile.type, "US_" + data.numero_us + estensione);
+      var file = folder.createFile(blob);
+      fileUrl = file.getUrl();
+    } else if (rigaTrovata != -1 && values[rigaTrovata - 1]) {
+      fileUrl = values[rigaTrovata - 1][8] || ""; 
+    }
+
+    var rapp = { "Copre": "", "È coperto da": "", "Taglia": "", "È tagliato da": "", "Riempie": "", "È riempito da": "" };
+    if (data.rapporti) {
+      data.rapporti.forEach(function(r) { if (rapp[r.tipo] !== undefined) rapp[r.tipo] += (rapp[r.tipo] === "" ? "" : ", ") + r.num; });
+    }
+
+    // RIGA CON AGGIUNTA QUOTE (Colonne 18 e 19)
+    var rigaDati = [
+      new Date(), data.scavo, data.cantiere, data.quadrante, data.numero_us, data.tipo_us, data.operatore,
+      data.fotoSpunta ? "SÌ" : "NO", fileUrl, rapp["Copre"], rapp["È coperto da"], rapp["Taglia"],
+      rapp["È tagliato da"], rapp["Riempie"], rapp["È riempito da"], data.descrizione, data.interpretazione,
+      data.quota_sup, data.quota_inf
+    ];
+
+    if (rigaTrovata != -1) {
+      sheet.getRange(rigaTrovata, 1, 1, rigaDati.length).setValues([rigaDati]);
+    } else {
+      sheet.appendRow(rigaDati);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({"result":"success"})).setMimeType(ContentService.MimeType.JSON);
+    
+  } catch (f) {
+    return ContentService.createTextOutput(JSON.stringify({"result":"error", "error": f.toString()})).setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function getSheetData(sheet) {
+  var values = sheet.getDataRange().getValues();
+  if (values.length < 2) return [];
+  var headers = values[0];
+  var data = [];
+  for (var i = 1; i < values.length; i++) {
+    var record = {};
+    for (var j = 0; j < headers.length; j++) record[headers[j]] = values[i][j];
+    data.push(record);
+  }
+  return data;
+}
