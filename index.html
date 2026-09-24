@@ -221,6 +221,17 @@
         <svg class="archaeo-icon" viewBox="0 0 64 64">
             <path d="M15 15 L48 12 L52 45 L40 55 L12 50 L10 28 Z" opacity="0.3" fill="none" stroke-width="2.5"/>
             <path d="M30 13 L33 22 L28 32" opacity="0.2" /> 
+
+            <text font-size="2.8" fill="var(--accent-pink)" opacity="0.8" 
+                  x="32" text-anchor="middle"
+                  style="font-family: serif; letter-spacing: 0.5px; stroke: none; font-weight: 100;">
+                <tspan x="32" y="24">𒆪𒀠𒁍𒌝𒀀𒇉𒄒𒉣</tspan>
+                <tspan x="32" y="30">𒌓𒄒𒉣𒋾𒀭𒆘𒀀</tspan>
+                <tspan x="32" y="36">𒀭𒌓𒀝𒆪𒌋𒀭</tspan>
+                <tspan x="32" y="42">𒈦𒇻𒀠𒁍𒌝𒆘𒀀𒁺</tspan>
+                <tspan x="32" y="48">𒀭𒀠𒀫𒀭𒈾</tspan>
+            </text>
+
             <circle class="dust-particle" cx="30" cy="18" r="1.2" />
             <circle class="dust-particle" cx="42" cy="22" r="0.8" style="animation-delay: 0.3s;"/>
             <g class="brush-anim">
@@ -258,7 +269,8 @@
 
             <div class="form-group">
                 <div class="label-header"><label>Numero US</label></div>
-                <input type="number" id="num_us" placeholder="Es: 100">
+                <input type="number" id="num_us" placeholder="Es: 100" required oninput="validaNumUS(true)">
+                <div id="num_us_error" style="display:none; font-size:12px; color:#ff5252; margin-top:4px;"></div>
             </div>
 
             <div class="form-group">
@@ -354,14 +366,22 @@
             speechRecognition.interimResults = false;
         }
 
+        let isListening = false;
         function startDictation(fieldId, btnElement) {
             if (!speechRecognition) {
                 showToast("Dettatura vocale non supportata da questo browser (usa Chrome o Safari).");
                 return;
             }
+
+            // Se sta già registrando, il secondo click ferma la registrazione
+            if (isListening) {
+                speechRecognition.stop();
+                return;
+            }
             
             speechRecognition.onstart = function() {
-                btnElement.style.color = "red";
+                isListening = true;
+                btnElement.innerText = "🔴";
                 showToast("In ascolto...");
             };
             
@@ -372,12 +392,14 @@
             };
             
             speechRecognition.onend = function() {
-                btnElement.style.color = "";
+                isListening = false;
+                btnElement.innerText = "🎤";
             };
             
             speechRecognition.onerror = function(event) {
                 showToast("Errore dettatura.");
-                btnElement.style.color = "";
+                isListening = false;
+                btnElement.innerText = "🎤";
             };
             
             speechRecognition.start();
@@ -613,8 +635,32 @@
                 const defaultOp = localStorage.getItem('defaultOperatore'); if(defaultOp) operatoreSelect.value = defaultOp;
                 preview.style.display = 'none'; saveBtnText.innerText = "INVIA DATI";
             }
-            document.getElementById('file_foto').value = ""; renderChips();
+            numUSInModifica = d ? String(d.Numero_US) : null;
+            document.getElementById('file_foto').value = ""; renderChips(); validaNumUS(true);
             modal.style.display = 'flex'; modalContent.style.transform = 'translateY(0)';
+        }
+
+        /* VALIDAZIONE NUMERO US (obbligatorio e univoco nello stesso scavo) */
+        let numUSInModifica = null;
+        function stessoNumUS(a, b) {
+            a = String(a).trim(); b = String(b).trim();
+            return a !== "" && b !== "" && (a === b || (!isNaN(a) && !isNaN(b) && Number(a) === Number(b)));
+        }
+        function validaNumUS(live = false) {
+            const input = document.getElementById('num_us');
+            const err = document.getElementById('num_us_error');
+            const val = input.value.trim();
+            let msg = "";
+            if (!val) {
+                if (!live) msg = "Numero US obbligatorio";
+            } else if (!(numUSInModifica !== null && stessoNumUS(numUSInModifica, val))) {
+                const esiste = databaseLocale.some(u => u.Scavo == path.scavo && stessoNumUS(u.Numero_US, val));
+                if (esiste) msg = "US già presente";
+            }
+            err.innerText = msg;
+            err.style.display = msg ? 'block' : 'none';
+            input.style.borderColor = msg ? '#ff5252' : '';
+            return !msg && val !== "";
         }
 
         function closeModal() { modalContent.style.transform = 'translateY(100%)'; setTimeout(() => modal.style.display = 'none', 300); }
@@ -624,6 +670,7 @@
         const toB64 = f => new Promise((res, rej) => { const r = new FileReader(); r.readAsDataURL(f); r.onload = () => res(r.result); r.onerror = e => rej(e); });
 
         async function salvaDati() {
+            if (!validaNumUS()) { document.getElementById('num_us').focus(); return; }
             document.getElementById('loader').style.display = 'flex';
             const btn = document.getElementById('save-btn-text'); btn.innerText = "Invio..."; btn.disabled = true;
             let fileObj = null; const fInput = document.getElementById('file_foto');
