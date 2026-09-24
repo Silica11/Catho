@@ -65,6 +65,13 @@
         .breadcrumb b { color: var(--accent-pink); opacity: 1; }
 
         .search-bar { width: 100%; padding: 12px 20px; border-radius: 25px; border: none; background: var(--white); box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-size: 16px; outline: none; box-sizing: border-box; }
+
+        .filter-pill {
+            padding: 6px 14px; border-radius: 15px; background: var(--white); color: var(--dark-text);
+            font-size: 12px; font-weight: 600; cursor: pointer; border: 1.5px solid var(--primary-pink);
+            transition: 0.2s; user-select: none;
+        }
+        .filter-pill.active { background: var(--accent-pink); color: white; border-color: var(--accent-pink); }
         
         .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 500px; padding-bottom: 100px; }
 
@@ -198,7 +205,8 @@
                 <button class="btn-save" onclick="registraUtente()" style="padding:10px; font-size:16px;">Registrati</button>
             </div>
             <div id="reg-status" style="margin-top:15px; font-size:14px; color:var(--accent-pink); display:none; background:var(--primary-pink); padding:10px; border-radius:10px;">
-                Utente attivo sul dispositivo:<br><b id="reg-name" style="font-size:18px;"></b>
+                Utente attivo sul dispositivo:
+                <select id="reg-name-select" onchange="selezionaOperatoreDefault(this.value)" style="margin-top:8px; padding:10px; font-size:16px; font-weight:bold; border:1px solid var(--accent-pink); border-radius:10px; background:white; color:var(--dark-text);"></select>
             </div>
         </div>
     </div>
@@ -251,7 +259,11 @@
             <div id="back-arrow" class="back-btn" onclick="goBack()">←</div>
         </div>
         <div id="breadcrumb" class="breadcrumb">Home</div>
-        <input type="text" id="search-input" class="search-bar" placeholder="Cerca US..." oninput="cercaUS(this.value)">
+        <input type="text" id="search-input" class="search-bar" placeholder="Cerca per Numero US..." oninput="cercaUS(this.value)">
+        <div id="search-filters" style="display:flex; gap:8px; margin-top:8px;">
+            <div class="filter-pill active" data-filter="US" onclick="setSearchFilter('US')">🔢 US</div>
+            <div class="filter-pill" data-filter="PAROLA" onclick="setSearchFilter('PAROLA')">🔤 Parola</div>
+        </div>
     </div>
 
     <div id="main-grid" class="grid-container"></div>
@@ -415,11 +427,25 @@
             document.getElementById('sidebar-overlay').style.display = 'block';
             setTimeout(() => { document.getElementById('sidebar-overlay').style.opacity = '1'; document.getElementById('sidebar').style.left = '0'; }, 10);
             const savedName = localStorage.getItem('defaultOperatore');
-            if(savedName) {
-                document.getElementById('nome-registrazione').value = savedName;
-                document.getElementById('reg-status').style.display = 'block';
-                document.getElementById('reg-name').innerText = savedName;
-            }
+            if(savedName) document.getElementById('nome-registrazione').value = savedName;
+            popolaSelectUtenteAttivo();
+        }
+
+        function popolaSelectUtenteAttivo() {
+            const sel = document.getElementById('reg-name-select');
+            const regStatus = document.getElementById('reg-status');
+            if(operatoriList.length === 0) { regStatus.style.display = 'none'; return; }
+            sel.innerHTML = "";
+            operatoriList.forEach(op => { const opt = document.createElement('option'); opt.value = op; opt.innerText = op; sel.appendChild(opt); });
+            const defaultOp = localStorage.getItem('defaultOperatore');
+            if(defaultOp && operatoriList.includes(defaultOp)) sel.value = defaultOp;
+            regStatus.style.display = 'block';
+        }
+
+        function selezionaOperatoreDefault(nome) {
+            localStorage.setItem('defaultOperatore', nome);
+            updateOperatoriDropdown();
+            showToast("Utente predefinito: " + nome);
         }
         
         function closeSidebar() {
@@ -432,7 +458,8 @@
             const nome = document.getElementById('nome-registrazione').value.trim();
             if(!nome) { showToast("Inserisci un nome o una sigla!"); return; }
             localStorage.setItem('defaultOperatore', nome);
-            document.getElementById('reg-status').style.display = 'block'; document.getElementById('reg-name').innerText = nome;
+            if(!operatoriList.includes(nome)) operatoriList.push(nome);
+            popolaSelectUtenteAttivo();
             updateOperatoriDropdown(nome);
             showToast("Nome impostato sul dispositivo!");
             try { fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "REGISTER_USER", nome: nome }) }); } catch(e) {}
@@ -569,9 +596,27 @@
             div.onclick = onClick; grid.appendChild(div);
         }
 
+        let searchFilter = 'US';
+        function setSearchFilter(f) {
+            searchFilter = f;
+            document.querySelectorAll('.filter-pill').forEach(p => p.classList.toggle('active', p.dataset.filter === f));
+            const input = document.getElementById('search-input');
+            input.placeholder = f === 'US' ? 'Cerca per Numero US...' : 'Cerca parola in descrizione/interpretazione...';
+            cercaUS(input.value);
+        }
+
         function cercaUS(q) {
-            q = q.trim().toLowerCase(); if(!q) { render(); return; } breadcrumb.innerHTML = `<span>Risultati per: "${q}"</span>`; grid.innerHTML = "";
-            databaseLocale.filter(u => String(u.Numero_US).includes(q)).forEach(us => {
+            q = q.trim().toLowerCase(); if(!q) { render(); return; } grid.innerHTML = "";
+            let risultati = [];
+            if(searchFilter === 'US') {
+                breadcrumb.innerHTML = `<span>Risultati US per: "${q}"</span>`;
+                risultati = databaseLocale.filter(u => String(u.Numero_US).toLowerCase().includes(q));
+            } else {
+                breadcrumb.innerHTML = `<span>Risultati parola "${q}" in Descrizione/Interpretazione</span>`;
+                risultati = databaseLocale.filter(u => String(u.Descrizione || "").toLowerCase().includes(q) || String(u.Interpretazione || "").toLowerCase().includes(q));
+            }
+            if(risultati.length === 0) { const emptyMsg = document.createElement('p'); emptyMsg.style.gridColumn = "1/-1"; emptyMsg.style.textAlign = "center"; emptyMsg.style.color = "gray"; emptyMsg.innerText = "Nessun risultato."; grid.appendChild(emptyMsg); return; }
+            risultati.forEach(us => {
                 const div = document.createElement('div'); div.className = 'box'; div.style.minHeight="60px"; div.style.alignItems="flex-start";
                 div.innerHTML = `<div class='delete-btn' onclick='event.stopPropagation(); eliminaUS("${us.Numero_US}")'>✕</div><div style='width:100%; display:flex; justify-content:space-between; padding-left:10px;'><b>US ${us.Numero_US}</b><small>${us.Tipo_US}</small></div><div style='font-size:10px; color:var(--accent-pink); padding-left:10px;'>📍 ${us.Scavo} | ${us.Cantiere} | ${us.Quadrante}</div>`;
                 div.onclick = () => { path.scavo = us.Scavo; path.cantiere = us.Cantiere; path.quadrante = us.Quadrante; openForm(us, true); }; grid.appendChild(div);
