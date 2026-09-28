@@ -214,7 +214,7 @@
     <!-- DIALOG CUSTOM -->
     <div id="custom-dialog" class="custom-dialog-overlay">
         <div class="custom-dialog-box">
-            <h3 class="custom-dialog-title" id="dialog-title">CaTho dice</h3>
+            <h3 class="custom-dialog-title" id="dialog-title">CaTho</h3>
             <div class="custom-dialog-message" id="dialog-message"></div>
             <input type="text" id="dialog-input" class="custom-dialog-input" placeholder="Scrivi qui...">
             <div class="custom-dialog-buttons">
@@ -251,6 +251,27 @@
     </div>
 
     <div id="toast">Messaggio</div>
+    <!-- EDITOR FOTO: scrivere/disegnare sulle foto -->
+    <style>
+        .ed-btn { padding: 10px 14px; border-radius: 20px; border: 2px solid var(--accent-pink); background: transparent; color: #fff; font-weight: 600; font-size: 14px; cursor: pointer; }
+        .ed-btn.active { background: var(--accent-pink); }
+        #ed-canvas { max-width: 100%; max-height: calc(100vh - 190px); max-height: calc(100dvh - 190px); touch-action: none; border-radius: 8px; background: #000; }
+    </style>
+    <div id="foto-editor" style="display:none; position:fixed; inset:0; background:#1c1c1c; z-index:10004; flex-direction:column;">
+        <div style="display:flex; gap:8px; padding:10px; justify-content:center; background:#2a2a2a;">
+            <button type="button" id="ed-btn-pen" class="ed-btn active" onclick="edSetMode('pen')">✏️ Penna</button>
+            <button type="button" id="ed-btn-text" class="ed-btn" onclick="edSetMode('text')">🔤 Testo</button>
+            <button type="button" class="ed-btn" onclick="edUndo()">↩️ Indietro</button>
+        </div>
+        <div id="ed-hint" style="text-align:center; color:#ccc; font-size:12px; padding:6px;">Disegna col dito sulla foto</div>
+        <div style="flex:1; display:flex; align-items:center; justify-content:center; overflow:hidden; padding:0 10px;">
+            <canvas id="ed-canvas"></canvas>
+        </div>
+        <div style="display:flex; gap:10px; padding:12px; background:#2a2a2a;">
+            <button type="button" class="ed-btn" style="flex:1;" onclick="edChiudi()">Annulla</button>
+            <button type="button" class="ed-btn active" style="flex:1;" onclick="edSalva()">✓ Salva foto</button>
+        </div>
+    </div>
 
     <!-- HEADER -->
     <div class="header-container">
@@ -293,6 +314,9 @@
                     <option value="riempimento">Riempimento</option>
                     <option value="accumulo">Accumulo</option>
                     <option value="installazione">Installazione</option>
+                    <option value="muro">Muro</option>
+                    <option value="superficie d'uso">Superficie d'uso</option>
+                    <option value="pavimento">Pavimento</option>
                 </select>
             </div>
 
@@ -310,12 +334,12 @@
                 </div>
             </div>
 
-            <!-- UPLOAD FILE (Nessun filtro accept = apre Fotocamera, Galleria o File) -->
+            <!-- UPLOAD FILE MULTIPLI (Foto, Video, Documenti) -->
             <div class="form-group">
                 <div class="label-header"><label>Media / Documenti (Foto, Video, ecc.)</label></div>
-                <input type="file" id="file_foto" style="margin-top: 5px;">
-                <img id="preview_foto" src="" style="width: 100%; margin-top: 10px; border-radius: 12px; display: none; border: 1px solid var(--primary-pink); object-fit: contain;">
-                <div id="file_name_display" style="font-size: 12px; color: gray; margin-top: 5px; display: none;"></div>
+                <label for="file_foto" class="btn-save" style="display:block; box-sizing:border-box; text-align:center; font-size:14px; padding:12px; margin-top:5px;">📎 Aggiungi foto / file</label>
+                <input type="file" id="file_foto" multiple style="display:none;">
+                <div id="media_list" style="display:flex; flex-direction:column; gap:12px; margin-top:12px;"></div>
             </div>
 
             <div class="label-header"><label>Rapporti Stratigrafici</label></div>
@@ -477,7 +501,7 @@
         }
 
         let dialogResolve = null;
-        function showCustomDialog(type, message, title = "CaTho dice") {
+        function showCustomDialog(type, message, title = "CaTho") {
             return new Promise((resolve) => {
                 dialogResolve = resolve; document.getElementById('dialog-title').innerText = title; document.getElementById('dialog-message').innerHTML = message;
                 const inputField = document.getElementById('dialog-input');
@@ -513,26 +537,174 @@
         });
         function handleOverlayClick(e) { if(e.target === modal) closeModal(); }
 
-        /* GESTIONE ANTEPRIMA FILE */
+        /* ===== FILE MULTIPLI + EDITOR ANNOTAZIONI FOTO ===== */
+        const COLORE_PENNA = '#ff1f5a';   // rosso-rosato: cambia qui se vuoi un'altra tinta
+        const MAX_LATO_FOTO = 2000;       // lato massimo (px) delle foto inviate/modificate
+
+        let filesDaCaricare = [];   // file scelti ma non ancora salvati
+        let mediaEsistenti = [];    // link già salvati su Drive per questa US
+        let fileIdCounter = 0;
+
         document.getElementById('file_foto').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            const preview = document.getElementById('preview_foto');
-            const fileDisplay = document.getElementById('file_name_display');
-            
-            if (file) { 
-                fileDisplay.innerText = "File selezionato: " + file.name;
-                fileDisplay.style.display = 'block';
-                if(file.type.startsWith('image/')) {
-                    preview.src = URL.createObjectURL(file); 
-                    preview.style.display = 'block'; 
-                } else {
-                    preview.style.display = 'none';
-                }
-            } else {
-                fileDisplay.style.display = 'none';
-                preview.style.display = 'none';
-            }
+            Array.from(e.target.files).forEach(f => {
+                filesDaCaricare.push({ id: ++fileIdCounter, file: f, url: URL.createObjectURL(f) });
+            });
+            e.target.value = "";   // permette di aggiungere altri file subito dopo
+            renderMedia();
         });
+
+        function rimuoviFile(id) {
+            const it = filesDaCaricare.find(x => x.id === id);
+            if (it) URL.revokeObjectURL(it.url);
+            filesDaCaricare = filesDaCaricare.filter(x => x.id !== id);
+            renderMedia();
+        }
+
+        function renderMedia() {
+            const box = document.getElementById('media_list'); box.innerHTML = "";
+            const stileBtn = "width:auto; padding:8px 12px; border:none; border-radius:20px; background:rgba(255,255,255,0.92); color:var(--accent-pink); font-weight:bold; font-size:14px; box-shadow:0 2px 6px rgba(0,0,0,0.25); cursor:pointer;";
+
+            mediaEsistenti.forEach(link => {
+                let thumb = link;
+                if (link.includes("drive.google.com")) { const m = link.match(/[-\w]{25,}/); if (m) thumb = `https://drive.google.com/thumbnail?id=${m[0]}&sz=w1000`; }
+                const w = document.createElement('div');
+                w.innerHTML = `<a href="${link}" target="_blank" rel="noopener"><img src="${thumb}" style="width:100%; min-height:120px; border-radius:12px; border:1px solid var(--primary-pink); object-fit:contain; background:#fff; display:block;"></a><div style="font-size:11px; color:gray; margin-top:3px;">Già salvato · tocca per aprire l'originale</div>`;
+                box.appendChild(w);
+            });
+
+            filesDaCaricare.forEach(it => {
+                const isImg = it.file.type.startsWith('image/');
+                const w = document.createElement('div'); w.style.position = 'relative';
+                w.innerHTML = (isImg
+                    ? `<img src="${it.url}" style="width:100%; border-radius:12px; border:1px solid var(--primary-pink); object-fit:contain; background:#fff; display:block;">`
+                    : `<div style="padding:14px; border-radius:12px; border:1px dashed var(--accent-pink); font-size:13px; word-break:break-all;">📄 ${it.file.name}</div>`)
+                    + `<div style="position:absolute; top:8px; right:8px; display:flex; gap:6px;">`
+                    + (isImg ? `<button type="button" style="${stileBtn}" onclick="apriEditor(${it.id})">✏️ Scrivi</button>` : "")
+                    + `<button type="button" style="${stileBtn}" onclick="rimuoviFile(${it.id})">✕</button></div>`;
+                box.appendChild(w);
+            });
+        }
+
+        /* Riduce le foto pesanti prima dell'invio (i file non-immagine restano invariati) */
+        function comprimiImmagine(file) {
+            return new Promise(resolve => {
+                if (!file.type.startsWith('image/') || file.size < 2000000) return resolve(file);
+                const img = new Image(); const url = URL.createObjectURL(file);
+                img.onload = () => {
+                    const s = Math.min(1, MAX_LATO_FOTO / Math.max(img.naturalWidth, img.naturalHeight));
+                    const c = document.createElement('canvas');
+                    c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+                    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+                    c.toBlob(b => {
+                        URL.revokeObjectURL(url);
+                        resolve(b ? new File([b], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' }) : file);
+                    }, 'image/jpeg', 0.88);
+                };
+                img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+                img.src = url;
+            });
+        }
+
+        /* ---- Editor: penna, testo, indietro ---- */
+        let edId = null, edImg = null, edActions = [], edDraw = null, edMode = 'pen', edTextPos = null;
+        const edCanvas = document.getElementById('ed-canvas');
+        const edCtx = edCanvas.getContext('2d');
+        const edSpessore = () => Math.max(4, edCanvas.width / 160);
+        const edCorpoTesto = () => Math.max(20, edCanvas.width / 16);
+
+        function apriEditor(id) {
+            const it = filesDaCaricare.find(x => x.id === id); if (!it) return;
+            const img = new Image();
+            img.onload = () => {
+                const s = Math.min(1, MAX_LATO_FOTO / Math.max(img.naturalWidth, img.naturalHeight));
+                edCanvas.width = Math.round(img.naturalWidth * s); edCanvas.height = Math.round(img.naturalHeight * s);
+                edImg = img; edId = id; edActions = []; edDraw = null; edTextPos = null;
+                edSetMode('pen'); edRedraw();
+                document.getElementById('foto-editor').style.display = 'flex';
+            };
+            img.onerror = () => showToast("Impossibile aprire la foto");
+            img.src = it.url;
+        }
+
+        function edSetMode(m) {
+            edMode = m;
+            document.getElementById('ed-btn-pen').classList.toggle('active', m === 'pen');
+            document.getElementById('ed-btn-text').classList.toggle('active', m === 'text');
+            document.getElementById('ed-hint').innerText = m === 'pen' ? "Disegna col dito sulla foto" : "Tocca il punto dove vuoi scrivere";
+        }
+
+        function edRedraw() {
+            const c = edCtx;
+            c.clearRect(0, 0, edCanvas.width, edCanvas.height);
+            c.drawImage(edImg, 0, 0, edCanvas.width, edCanvas.height);
+            c.lineCap = 'round'; c.lineJoin = 'round';
+            edActions.concat(edDraw ? [edDraw] : []).forEach(a => {
+                if (a.type === 'pen') {
+                    c.strokeStyle = COLORE_PENNA; c.lineWidth = edSpessore();
+                    c.beginPath();
+                    a.pts.forEach((p, i) => { if (i) c.lineTo(p.x, p.y); else c.moveTo(p.x, p.y); });
+                    if (a.pts.length === 1) c.lineTo(a.pts[0].x + 0.1, a.pts[0].y);   // punto singolo
+                    c.stroke();
+                } else {
+                    const corpo = edCorpoTesto();
+                    c.font = `bold ${corpo}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
+                    c.lineWidth = corpo / 8; c.strokeStyle = '#ffffff'; c.strokeText(a.text, a.x, a.y);   // bordo bianco per leggibilità
+                    c.fillStyle = COLORE_PENNA; c.fillText(a.text, a.x, a.y);
+                }
+            });
+        }
+
+        function edPos(ev) {
+            const r = edCanvas.getBoundingClientRect();
+            return { x: (ev.clientX - r.left) * edCanvas.width / r.width, y: (ev.clientY - r.top) * edCanvas.height / r.height };
+        }
+
+        edCanvas.addEventListener('pointerdown', ev => {
+            ev.preventDefault();
+            const p = edPos(ev);
+            if (edMode === 'text') { edTextPos = p; return; }
+            edCanvas.setPointerCapture(ev.pointerId);
+            edDraw = { type: 'pen', pts: [p] }; edRedraw();
+        });
+        edCanvas.addEventListener('pointermove', ev => {
+            if (!edDraw) return;
+            const p = edPos(ev), prev = edDraw.pts[edDraw.pts.length - 1];
+            edDraw.pts.push(p);
+            edCtx.strokeStyle = COLORE_PENNA; edCtx.lineWidth = edSpessore(); edCtx.lineCap = 'round';
+            edCtx.beginPath(); edCtx.moveTo(prev.x, prev.y); edCtx.lineTo(p.x, p.y); edCtx.stroke();   // disegna solo l'ultimo tratto (più fluido)
+        });
+        edCanvas.addEventListener('pointerup', async () => {
+            if (edMode === 'text') {
+                if (!edTextPos) return;
+                const p = edTextPos; edTextPos = null;
+                const t = await customPrompt("Scrivi il testo da mettere sulla foto:");
+                if (t && t.trim()) { edActions.push({ type: 'text', text: t.trim(), x: p.x, y: p.y }); edRedraw(); }
+            } else if (edDraw) { edActions.push(edDraw); edDraw = null; edRedraw(); }
+        });
+        edCanvas.addEventListener('pointercancel', () => {
+            edTextPos = null;
+            if (edDraw) { edActions.push(edDraw); edDraw = null; edRedraw(); }
+        });
+
+        function edUndo() { if (edActions.length) { edActions.pop(); edRedraw(); } }
+
+        function edChiudi() {
+            document.getElementById('foto-editor').style.display = 'none';
+            edImg = null; edId = null; edActions = []; edDraw = null; edTextPos = null;
+        }
+
+        function edSalva() {
+            edCanvas.toBlob(blob => {
+                const it = filesDaCaricare.find(x => x.id === edId);
+                if (it && blob) {
+                    const nome = it.file.name.replace(/\.[^.]+$/, '') + "_annotata.jpg";
+                    it.file = new File([blob], nome, { type: 'image/jpeg' });
+                    URL.revokeObjectURL(it.url); it.url = URL.createObjectURL(it.file);
+                    renderMedia();
+                }
+                edChiudi();
+            }, 'image/jpeg', 0.88);
+        }
 
         async function caricaDatiDalDatabase(isSearchReturn = false) {
             document.getElementById('loader').style.display = 'flex';
@@ -651,8 +823,8 @@
         let isFromSearch = false;
         function openForm(d = null, fromSearch = false) {
             isFromSearch = fromSearch; document.getElementById('form-context').value = `${path.scavo} | ${path.cantiere} | ${path.quadrante}`;
-            const preview = document.getElementById('preview_foto'); const saveBtnText = document.getElementById('save-btn-text'); const operatoreSelect = document.getElementById('operatore');
-            document.getElementById('file_name_display').style.display = 'none';
+            const saveBtnText = document.getElementById('save-btn-text'); const operatoreSelect = document.getElementById('operatore');
+            filesDaCaricare = []; mediaEsistenti = [];
             rapportiDati = [];
             
             if(d) {
@@ -669,19 +841,16 @@
                 
                 if(d.Operatore) operatoreSelect.value = d.Operatore;
                 let url = d.Link || d.link || d.LINK || d.URL || d.FileUrl || "";
-                if(url && url.length > 10) {
-                    if(url.includes("drive.google.com")) { const idMatch = url.match(/[-\w]{25,}/); if(idMatch) url = `https://drive.google.com/thumbnail?id=${idMatch[0]}&sz=w1000`; }
-                    preview.src = url; preview.style.display = 'block'; preview.style.minHeight = '200px';
-                } else { preview.style.display = 'none'; }
+                mediaEsistenti = String(url).split(/[\s|,]+/).filter(u => u.startsWith("http"));
                 saveBtnText.innerText = "AGGIORNA DATI";
             } else {
                 document.getElementById('num_us').value = ""; document.getElementById('descrizione').value = ""; document.getElementById('interpretazione').value = "";
                 document.getElementById('quota_sup').value = ""; document.getElementById('quota_inf').value = "";
                 const defaultOp = localStorage.getItem('defaultOperatore'); if(defaultOp) operatoreSelect.value = defaultOp;
-                preview.style.display = 'none'; saveBtnText.innerText = "INVIA DATI";
+                saveBtnText.innerText = "INVIA DATI";
             }
             numUSInModifica = d ? String(d.Numero_US) : null;
-            document.getElementById('file_foto').value = ""; renderChips(); validaNumUS(true);
+            document.getElementById('file_foto').value = ""; renderMedia(); renderChips(); validaNumUS(true);
             modal.style.display = 'flex'; modalContent.style.transform = 'translateY(0)';
         }
 
@@ -718,17 +887,16 @@
             if (!validaNumUS()) { document.getElementById('num_us').focus(); return; }
             document.getElementById('loader').style.display = 'flex';
             const btn = document.getElementById('save-btn-text'); btn.innerText = "Invio..."; btn.disabled = true;
-            let fileObj = null; const fInput = document.getElementById('file_foto');
-            
-            if(fInput.files.length > 0) {
-                const f = fInput.files[0]; const b64 = await toB64(f);
-                fileObj = { base64: b64.split(',')[1], type: f.type, name: f.name };
+            let fileList = [];
+            for (const it of filesDaCaricare) {
+                const f = await comprimiImmagine(it.file); const b64 = await toB64(f);
+                fileList.push({ base64: b64.split(',')[1], type: f.type, name: f.name });
             }
-            
+
             const p = {
                 action: "SAVE_US", scavo: path.scavo, cantiere: path.cantiere, quadrante: path.quadrante,
                 numero_us: document.getElementById('num_us').value, tipo_us: document.getElementById('tipo_us').value,
-                operatore: document.getElementById('operatore').value, fotoFile: fileObj, rapporti: rapportiDati,
+                operatore: document.getElementById('operatore').value, fotoFiles: fileList, rapporti: rapportiDati,
                 descrizione: document.getElementById('descrizione').value, interpretazione: document.getElementById('interpretazione').value,
                 quota_sup: document.getElementById('quota_sup').value, quota_inf: document.getElementById('quota_inf').value
             };
