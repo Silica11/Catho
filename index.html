@@ -207,6 +207,7 @@
             <div id="reg-status" style="margin-top:15px; font-size:14px; color:var(--accent-pink); display:none; background:var(--primary-pink); padding:10px; border-radius:10px;">
                 Utente attivo sul dispositivo:
                 <select id="reg-name-select" onchange="selezionaOperatoreDefault(this.value)" style="margin-top:8px; padding:10px; font-size:16px; font-weight:bold; border:1px solid var(--accent-pink); border-radius:10px; background:white; color:var(--dark-text);"></select>
+                <button type="button" onclick="eliminaUtente()" style="margin-top:8px; padding:8px; width:100%; border:1px solid var(--accent-pink); background:white; color:var(--accent-pink); border-radius:10px; font-weight:600; font-size:13px; cursor:pointer;">🗑️ Elimina questo nome dall'elenco</button>
             </div>
         </div>
     </div>
@@ -450,15 +451,21 @@
         function openSidebar() {
             document.getElementById('sidebar-overlay').style.display = 'block';
             setTimeout(() => { document.getElementById('sidebar-overlay').style.opacity = '1'; document.getElementById('sidebar').style.left = '0'; }, 10);
-            const savedName = localStorage.getItem('defaultOperatore');
-            if(savedName) document.getElementById('nome-registrazione').value = savedName;
             popolaSelectUtenteAttivo();
+        }
+
+        /* Se non c'è un utente di default valido, il primo della lista diventa quello di default */
+        function assicuraUtenteDefault() {
+            if(operatoriList.length === 0) return;
+            const d = localStorage.getItem('defaultOperatore');
+            if(!d || !operatoriList.includes(d)) localStorage.setItem('defaultOperatore', operatoriList[0]);
         }
 
         function popolaSelectUtenteAttivo() {
             const sel = document.getElementById('reg-name-select');
             const regStatus = document.getElementById('reg-status');
             if(operatoriList.length === 0) { regStatus.style.display = 'none'; return; }
+            assicuraUtenteDefault();
             sel.innerHTML = "";
             operatoriList.forEach(op => { const opt = document.createElement('option'); opt.value = op; opt.innerText = op; sel.appendChild(opt); });
             const defaultOp = localStorage.getItem('defaultOperatore');
@@ -470,6 +477,18 @@
             localStorage.setItem('defaultOperatore', nome);
             updateOperatoriDropdown();
             showToast("Utente predefinito: " + nome);
+        }
+
+        async function eliminaUtente() {
+            const nome = document.getElementById('reg-name-select').value; if(!nome) return;
+            const ok = await customConfirm(`Vuoi eliminare <b>${nome}</b> dall'elenco utenti?<br><small>Le US già compilate con questo nome non cambiano.</small>`);
+            if(!ok) return;
+            operatoriList = operatoriList.filter(o => o !== nome);
+            if(localStorage.getItem('defaultOperatore') === nome) {
+                if(operatoriList.length) localStorage.setItem('defaultOperatore', operatoriList[0]); else localStorage.removeItem('defaultOperatore');
+            }
+            popolaSelectUtenteAttivo(); updateOperatoriDropdown();
+            try { fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "DELETE_USER", nome: nome }) }); } catch(e) {}
         }
         
         function closeSidebar() {
@@ -485,6 +504,7 @@
             if(!operatoriList.includes(nome)) operatoriList.push(nome);
             popolaSelectUtenteAttivo();
             updateOperatoriDropdown(nome);
+            document.getElementById('nome-registrazione').value = "";
             showToast("Nome impostato sul dispositivo!");
             try { fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "REGISTER_USER", nome: nome }) }); } catch(e) {}
             setTimeout(() => closeSidebar(), 1500);
@@ -493,8 +513,12 @@
         function updateOperatoriDropdown(nuovoNome = null) {
             const select = document.getElementById('operatore');
             if(nuovoNome && !operatoriList.includes(nuovoNome)) operatoriList.push(nuovoNome);
-            if(operatoriList.length === 0) operatoriList = ["Archeologo 1", "Archeologo 2"];
+            assicuraUtenteDefault();
             select.innerHTML = "";
+            if(operatoriList.length === 0) {
+                const opt = document.createElement('option'); opt.value = ""; opt.innerText = "— Nessun utente registrato —"; select.appendChild(opt);
+                return;
+            }
             operatoriList.forEach(op => { const opt = document.createElement('option'); opt.value = op; opt.innerText = op; select.appendChild(opt); });
             const defaultOp = localStorage.getItem('defaultOperatore');
             if(defaultOp && operatoriList.includes(defaultOp)) select.value = defaultOp;
